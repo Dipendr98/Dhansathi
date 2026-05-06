@@ -40,6 +40,60 @@ function getLastUserMessage(messages = []) {
   return typeof last?.content === 'string' ? last.content : '';
 }
 
+function getLiveStockContext(messages = []) {
+  const joined = messages
+    .map((message) => typeof message?.content === 'string' ? message.content : '')
+    .join('\n');
+  const marker = 'DhanSathi live stock context:';
+  const index = joined.lastIndexOf(marker);
+  if (index === -1) return null;
+
+  const context = joined.slice(index).split('\n').slice(0, 16);
+  const fields = {};
+  for (const line of context) {
+    const [key, ...rest] = line.split(':');
+    if (!rest.length) continue;
+    fields[key.trim().toLowerCase()] = rest.join(':').trim();
+  }
+  return Object.keys(fields).length ? fields : null;
+}
+
+function buildStockFallbackAnswer(messages) {
+  const stock = getLiveStockContext(messages);
+  if (!stock) {
+    return [
+      'Here is a practical DhanSathi market view you can use while live AI is busy.',
+      '',
+      'I could not identify live stock data in this request. Ask with a clear NSE symbol or company name, for example: "explain RELIANCE stock" or "TCS RSI signal".',
+      '',
+      'For any stock, confirm CMP, volume, delivery percentage, trend, RSI, support/resistance, stop-loss and position size before acting. This is educational, not guaranteed profit.',
+    ].join('\n');
+  }
+
+  return [
+    `${stock.company || stock.symbol || 'Stock'} (${stock.symbol || 'symbol unavailable'}) stock view`,
+    '',
+    `- CMP: ${stock.cmp || 'N/A'}`,
+    `- Change: ${stock.change || 'N/A'}`,
+    `- Volume: ${stock.volume || 'N/A'}`,
+    `- Delivery %: ${stock['delivery percentage'] || 'N/A'}`,
+    `- RSI 14: ${stock['rsi 14'] || 'N/A'}`,
+    `- SMA 20/50/200: ${stock['sma 20/50/200'] || 'N/A'}`,
+    `- DhanSathi signal: ${stock['dhansathi signal'] || 'N/A'}`,
+    '',
+    'Interpretation:',
+    '- If price is above SMA20 and SMA50 with healthy RSI, trend is constructive.',
+    '- If price is below SMA20 or RSI is weak, wait for confirmation instead of chasing.',
+    '- Delivery data is shown only when the provider supplies exchange delivery percentage.',
+    '',
+    'Trading discipline:',
+    '- Decide entry, stop-loss, target and position size before placing any trade.',
+    '- Avoid averaging down blindly; no signal is 100% guaranteed.',
+    '',
+    'This is educational stock analysis, not financial advice.',
+  ].join('\n');
+}
+
 function buildServerFallbackAnswer(messages) {
   const question = getLastUserMessage(messages).toLowerCase();
 
@@ -54,13 +108,7 @@ function buildServerFallbackAnswer(messages) {
   }
 
   if (question.includes('stock') || question.includes('trade') || question.includes('rsi') || question.includes('signal')) {
-    return [
-      'Here is a practical DhanSathi market view you can use while live AI is busy.',
-      '',
-      'For any stock, confirm CMP, volume, delivery percentage, trend, RSI, and support/resistance before acting. A stronger setup usually needs price above key moving averages, rising volume, RSI not extremely overbought, and a clear invalidation level.',
-      '',
-      'Treat all signals as educational, not guaranteed profit. Decide entry, stop-loss, target, and position size before placing a trade.',
-    ].join('\n');
+    return buildStockFallbackAnswer(messages);
   }
 
   return [

@@ -5,6 +5,7 @@ import { loadSavedUserProfile, useAuthStore } from '@/stores/authStore';
 import { usePlanStore } from '@/stores/planStore';
 import { useLanguageStore } from '@/stores/languageStore';
 import { calculateSchemeMatches, calculateUnclaimedBenefits } from '@/lib/schemeService';
+import { fetchStockBySymbol, searchAndFetchStocks } from '@/lib/stockApi';
 import { MOCK_STOCKS } from '@/data/mockStocks';
 import type { StockData, UserProfile } from '@/types';
 
@@ -66,6 +67,30 @@ interface NvidiaChatResponse {
   }>;
 }
 
+const STOCK_ALIASES: Record<string, string> = {
+  reliance: 'RELIANCE',
+  realiance: 'RELIANCE',
+  rel: 'RELIANCE',
+  tcs: 'TCS',
+  infosys: 'INFY',
+  infy: 'INFY',
+  hdfc: 'HDFCBANK',
+  hdfcbank: 'HDFCBANK',
+  icici: 'ICICIBANK',
+  icicibank: 'ICICIBANK',
+  sbi: 'SBIN',
+  tatamotors: 'TATAMOTORS',
+  tata: 'TATAMOTORS',
+  airtel: 'BHARTIARTL',
+  bharti: 'BHARTIARTL',
+  itc: 'ITC',
+  adani: 'ADANIENT',
+  axis: 'AXISBANK',
+  kotak: 'KOTAKBANK',
+  larsen: 'LT',
+  lt: 'LT',
+};
+
 function formatINR(amount: number): string {
   return `₹${Math.round(amount).toLocaleString('en-IN')}`;
 }
@@ -79,6 +104,136 @@ function getAge(dateOfBirth?: string): number | null {
 
 function humanize(value?: string): string {
   return value ? value.replace(/_/g, ' ') : '';
+}
+
+function formatStockPrice(stock: StockData): string {
+  const currency = stock.currency || 'INR';
+  const amount = stock.price.toLocaleString(currency === 'INR' ? 'en-IN' : 'en-US', {
+    maximumFractionDigits: 2,
+    minimumFractionDigits: stock.price < 100 ? 2 : 0,
+  });
+  return currency === 'INR' ? `₹${amount}` : `${currency} ${amount}`;
+}
+
+function formatVolume(value: number): string {
+  if (!Number.isFinite(value) || value <= 0) return 'N/A';
+  if (value >= 10_000_000) return `${(value / 10_000_000).toFixed(2)} Cr`;
+  if (value >= 100_000) return `${(value / 100_000).toFixed(2)} L`;
+  return Math.round(value).toLocaleString('en-IN');
+}
+
+function formatSignal(signal: StockData['signal']): string {
+  return signal.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function hasStockIntent(input: string): boolean {
+  const lower = input.toLowerCase();
+  return [
+    'stock', 'share', 'cmp', 'rsi', 'signal', 'buy', 'sell', 'trade',
+    'target', 'stoploss', 'stop-loss', 'volume', 'delivery', 'explain',
+  ].some((word) => lower.includes(word)) || Object.keys(STOCK_ALIASES).some((alias) => lower.includes(alias));
+}
+
+function extractStockQuery(input: string): string | null {
+  const lower = input.toLowerCase().replace(/[^a-z0-9\s]/g, ' ');
+  const compact = lower.replace(/\s+/g, '');
+
+  for (const [alias, symbol] of Object.entries(STOCK_ALIASES)) {
+    if (compact.includes(alias)) return symbol;
+  }
+
+  const upperTokens = input
+    .toUpperCase()
+    .replace(/[^A-Z0-9\s]/g, ' ')
+    .split(/\s+/)
+    .filter((token) => token.length >= 2 && token.length <= 12);
+
+  const ignored = new Set(['STOCK', 'SHARE', 'EXPLAIN', 'ANALYSIS', 'BUY', 'SELL', 'RSI', 'CMP']);
+  return upperTokens.find((token) => !ignored.has(token)) || null;
+}
+
+async function resolveAskedStock(input: string): Promise<StockData | null> {
+  if (!hasStockIntent(input)) return null;
+
+  const query = extractStockQuery(input);
+  if (!query) return null;
+
+  const direct = await fetchStockBySymbol(query);
+  if (direct) return direct;
+
+  const results = await searchAndFetchStocks(query);
+  return results[0] || null;
+}
+
+function buildLiveStockContext(stock: StockData): string {
+  const delivery = stock.delivery_source === 'exchange' && stock.delivery_pct > 0
+    ? `${stock.delivery_pct.toFixed(1)}%`
+    : 'N/A from current provider';
+  const signalSource = stock.signal_source === 'live_history'
+    ? 'live 1Y chart history'
+    : stock.signal_source === 'partial_history'
+      ? 'partial chart history'
+      : 'estimated';
+
+  return [
+    'DhanSathi live stock context:',
+    `Symbol: ${stock.symbol}`,
+    `Company: ${stock.name}`,
+    `Exchange: ${stock.exchange || 'NSE/Yahoo'}`,
+    `CMP: ${formatStockPrice(stock)}`,
+    `Change: ${stock.change >= 0 ? '+' : ''}${stock.change.toFixed(2)} (${stock.change_pct >= 0 ? '+' : ''}${stock.change_pct.toFixed(2)}%)`,
+    `Volume: ${formatVolume(stock.volume)}; average volume: ${formatVolume(stock.avg_volume)}`,
+    `Delivery percentage: ${delivery}`,
+    `RSI 14: ${stock.rsi_14}`,
+    `SMA 20/50/200: ${stock.sma_20.toFixed(2)} / ${stock.sma_50.toFixed(2)} / ${stock.sma_200.toFixed(2)}`,
+    `52-week range: ${formatStockPrice({ ...stock, price: stock.week_52_low })} - ${formatStockPrice({ ...stock, price: stock.week_52_high })}`,
+    `DhanSathi signal: ${formatSignal(stock.signal)} (${signalSource})`,
+    `Data quality: ${stock.data_quality || 'partial'}; source: ${stock.data_source || 'market API'}`,
+    stock.warning ? `Provider note: ${stock.warning}` : '',
+  ].filter(Boolean).join('\n');
+}
+
+function buildStockMasterResponse(stock: StockData, user: UserProfile | null): string {
+  const isAbove20 = stock.price >= stock.sma_20;
+  const isAbove50 = stock.price >= stock.sma_50;
+  const rsiView =
+    stock.rsi_14 >= 70 ? 'RSI is overbought, so fresh entry needs patience.'
+      : stock.rsi_14 <= 30 ? 'RSI is oversold, so watch for reversal confirmation.'
+        : stock.rsi_14 >= 55 ? 'RSI shows positive momentum but is not extreme.'
+          : stock.rsi_14 >= 45 ? 'RSI is neutral, so price confirmation matters.'
+            : 'RSI is weak, so avoid aggressive buying until momentum improves.';
+  const trendView = isAbove20 && isAbove50
+    ? 'Price is above short and medium moving averages, which supports an uptrend bias.'
+    : isAbove20
+      ? 'Price is above SMA20 but not fully above SMA50, so trend is improving but not clean yet.'
+      : 'Price is below SMA20, so wait for strength before considering entry.';
+  const delivery = stock.delivery_source === 'exchange' && stock.delivery_pct > 0
+    ? `${stock.delivery_pct.toFixed(1)}%`
+    : 'N/A';
+
+  return [
+    `${stock.name} (${stock.symbol}) stock view`,
+    '',
+    `- CMP: ${formatStockPrice(stock)}`,
+    `- Change: ${stock.change >= 0 ? '+' : ''}${stock.change.toFixed(2)} (${stock.change_pct >= 0 ? '+' : ''}${stock.change_pct.toFixed(2)}%)`,
+    `- Volume: ${formatVolume(stock.volume)}; avg volume: ${formatVolume(stock.avg_volume)}`,
+    `- Delivery %: ${delivery}`,
+    `- RSI 14: ${stock.rsi_14}`,
+    `- SMA 20/50/200: ${stock.sma_20.toFixed(2)} / ${stock.sma_50.toFixed(2)} / ${stock.sma_200.toFixed(2)}`,
+    `- DhanSathi signal: ${formatSignal(stock.signal)}`,
+    '',
+    'Interpretation:',
+    `- ${trendView}`,
+    `- ${rsiView}`,
+    `- Signal quality is ${stock.signal_source === 'live_history' ? 'stronger because it uses live chart history' : 'limited because some indicators are partial/estimated'}.`,
+    '',
+    'Trading discipline:',
+    `- Bullish only if price sustains above ${formatStockPrice({ ...stock, price: Math.max(stock.sma_20, stock.sma_50) })}.`,
+    `- Weak below ${formatStockPrice({ ...stock, price: stock.sma_20 })}; avoid averaging down blindly.`,
+    `- For your profile${user?.annual_income ? ` with income ${formatINR(user.annual_income)}` : ''}, keep position size small and do not risk more than you can afford to lose.`,
+    '',
+    'This is educational analysis, not guaranteed profit or financial advice.',
+  ].join('\n');
 }
 
 function getPersonalizedStockIdeas(user: UserProfile | null): StockData[] {
@@ -241,12 +396,14 @@ function TypingIndicator() {
 
 /* ── Component ─────────────────────────────────── */
 
-function buildSystemPrompt(user: UserProfile | null, isHindi: boolean = false): string {
+function buildSystemPrompt(user: UserProfile | null, isHindi: boolean = false, liveStockContext = ''): string {
   let prompt = `You are DhanSathi, a helpful financial assistant for users in India. You help with government scheme eligibility, stock analysis, SIP calculations, and personalized financial guidance.
 
-Use the saved profile and DhanSathi app context below whenever answering. If the user asks about schemes, recommend the strongest matches first, explain why they match, mention missing profile details if any, and suggest the next action. If the user asks about stocks or trades, use the stock context as educational analysis only: discuss risk, entry discipline, stop-loss thinking, position sizing, and avoid guaranteed-profit language. Always include a short reminder that stock ideas are educational and not financial advice.
+Use the saved profile and DhanSathi app context below whenever answering. If the user asks about schemes, recommend the strongest matches first, explain why they match, mention missing profile details if any, and suggest the next action. If the user asks about stocks or trades, use the live stock context first when available. Include CMP, change %, volume, delivery %, RSI, trend, signal, entry discipline, stop-loss thinking, position sizing, and avoid guaranteed-profit language. Always include a short reminder that stock ideas are educational and not financial advice.
 
-${buildPersonalizationContext(user)}`;
+${buildPersonalizationContext(user)}
+
+${liveStockContext}`;
 
   prompt += `\n\nYou are bilingual in Hindi and English. If the user writes in Hindi (Devanagari script or Hinglish), respond in Hindi. If they write in English, respond in English. Use simple, friendly language that a common Indian citizen can understand. Use ₹ for Indian currency.`;
 
@@ -359,11 +516,20 @@ export default function ChatPage() {
     setInputValue('');
     setIsTyping(true);
 
+    let askedStock: StockData | null = null;
+    let liveStockContext = '';
+    try {
+      askedStock = await resolveAskedStock(messageText);
+      liveStockContext = askedStock ? buildLiveStockContext(askedStock) : '';
+    } catch (error) {
+      console.warn('[ChatPage] Stock context lookup failed:', error);
+    }
+
     const addFallbackResponse = (includeNotice = false) => {
       const aiResponse: ChatMessage = {
         id: nextMessageId(),
         role: 'ai',
-        content: `${includeNotice ? 'Live AI is unavailable right now, so I am using DhanSathi smart mode.\n\n' : ''}${getAIResponse(messageText, effectiveUser)}`,
+        content: `${includeNotice ? 'Live AI is unavailable right now, so I am using DhanSathi smart mode.\n\n' : ''}${getAIResponse(messageText, effectiveUser, askedStock)}`,
         timestamp: new Date().toLocaleTimeString('en-US', {
           hour: 'numeric',
           minute: '2-digit',
@@ -384,9 +550,9 @@ export default function ChatPage() {
         }));
 
       const aiResult = await requestDhanSathiAI([
-          { role: "system", content: buildSystemPrompt(effectiveUser, isHindi) },
+          { role: "system", content: buildSystemPrompt(effectiveUser, isHindi, liveStockContext) },
           ...chatHistory,
-          { role: "user", content: messageText }
+          { role: "user", content: liveStockContext ? `${messageText}\n\n${liveStockContext}` : messageText }
         ]);
 
       const responseId = nextMessageId();
@@ -396,7 +562,7 @@ export default function ChatPage() {
         {
           id: responseId,
           role: 'ai',
-          content: aiResult.content || getAIResponse(messageText, effectiveUser),
+          content: aiResult.content || getAIResponse(messageText, effectiveUser, askedStock),
           reasoning: aiResult.reasoning,
           timestamp: new Date().toLocaleTimeString('en-US', {
             hour: 'numeric',
@@ -689,7 +855,7 @@ export default function ChatPage() {
 
 /* ── Mock AI Responses ─────────────────────────── */
 
-function getAIResponse(userInput: string, user: UserProfile | null): string {
+function getAIResponse(userInput: string, user: UserProfile | null, askedStock: StockData | null = null): string {
   const input = userInput.toLowerCase();
   const matches = user ? calculateSchemeMatches(user).slice(0, 3) : [];
   const stockIdeas = getPersonalizedStockIdeas(user).slice(0, 3);
@@ -706,11 +872,15 @@ function getAIResponse(userInput: string, user: UserProfile | null): string {
     return `I can see your saved income now.\n\n- Annual income: ${formatINR(user.annual_income)}\n- Approx monthly income: ${formatINR(monthlyIncome)}\n- Occupation: ${humanize(user.occupation) || 'Not set'}\n- Location: ${user.district || 'District not set'}, ${user.state || 'State not set'}\n\nI will use this income for scheme eligibility, benefit matching, SIP planning, and risk-aware stock suggestions.`;
   }
 
-  if (input.includes('stock') || input.includes('analysis')) {
+  if (askedStock) {
+    return buildStockMasterResponse(askedStock, user);
+  }
+
+  if (hasStockIntent(input) || input.includes('analysis')) {
     const ideas = stockIdeas.map((stock) =>
-      `- ${stock.symbol}: ${stock.signal.replace(/_/g, ' ')} signal, RSI ${stock.rsi_14}, PE ${stock.pe_ratio}`,
+      `- ${stock.symbol}: ${formatSignal(stock.signal)} signal, CMP ${formatStockPrice(stock)}, RSI ${stock.rsi_14}, PE ${stock.pe_ratio}`,
     ).join('\n');
-    return `${profileIntro}here are stock ideas from the DhanSathi screener:\n\n${ideas || '- No stock ideas match your current risk profile.'}\n\nUse these for education only. Open Stocks or DhanMitra for live CMP/volume/RSI before any trade. Keep position size small, define a stop-loss before entry, and do not trade without your own confirmation.`;
+    return `${profileIntro}here are stock ideas from the DhanSathi screener:\n\n${ideas || '- I could not identify the stock name/symbol. Try asking "explain RELIANCE stock" or "TCS RSI signal".'}\n\nFor a master stock view, ask with a company name or NSE symbol. I will fetch CMP, change %, volume, RSI, SMA trend and signal. Use this for education only. Keep position size small, define a stop-loss before entry, and do not trade without your own confirmation.`;
   }
 
   if (input.includes('sip') || input.includes('calculator')) {
