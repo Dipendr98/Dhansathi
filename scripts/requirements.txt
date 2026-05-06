@@ -1,0 +1,6 @@
+supabase
+yfinance
+openai
+python-dotenv
+aiohttp
+asyncio

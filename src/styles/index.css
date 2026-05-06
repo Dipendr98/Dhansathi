@@ -1,0 +1,291 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap');
+
+@import "tailwindcss";
+
+/* ───────────────────────────────────────────────
+   Digital Sovereign Design System - DhanSathi
+   ─────────────────────────────────────────────── */
+
+@theme {
+  /* ── Primary ── */
+  --color-primary: #006194;
+  --color-primary-container: #007bb9;
+  --color-on-primary: #ffffff;
+  --color-primary-fixed: #cce5ff;
+  --color-primary-fixed-dim: #93ccff;
+
+  /* ── Secondary ── */
+  --color-secondary: #8f4e00;
+  --color-secondary-container: #fe9832;
+  --color-on-secondary: #ffffff;
+  --color-secondary-fixed: #ffdcc2;
+  --color-secondary-fixed-dim: #ffb77a;
+
+  /* ── Tertiary ── */
+  --color-tertiary: #056c00;
+  --color-tertiary-container: #128707;
+  --color-on-tertiary: #ffffff;
+  --color-tertiary-fixed: #8dfc75;
+  --color-tertiary-fixed-dim: #72de5c;
+
+  /* ── Error ── */
+  --color-error: #ba1a1a;
+  --color-error-container: #ffdad6;
+  --color-on-error: #ffffff;
+
+  /* ── Surfaces ── */
+  --color-background: #fbf8ff;
+  --color-surface: #fbf8ff;
+  --color-on-surface: #00006e;
+  --color-on-surface-variant: #3f4850;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f5f2ff;
+  --color-surface-container: #eeecff;
+  --color-surface-container-high: #e7e6ff;
+  --color-surface-container-highest: #e0e0ff;
+
+  /* ── Outline ── */
+  --color-outline: #707881;
+  --color-outline-variant: #bfc7d2;
+
+  /* ── Extended Surface ── */
+  --color-on-primary-container: #fdfcff;
+  --color-on-secondary-container: #683700;
+  --color-on-tertiary-container: #f8ffef;
+  --color-on-error-container: #93000a;
+  --color-on-background: #00006e;
+  --color-surface-variant: #e0e0ff;
+  --color-surface-dim: #d6d7ff;
+  --color-surface-bright: #fbf8ff;
+  --color-surface-tint: #006398;
+  --color-inverse-surface: #181d8c;
+  --color-inverse-on-surface: #f1efff;
+  --color-inverse-primary: #93ccff;
+  --color-on-primary-fixed: #001d31;
+  --color-on-primary-fixed-variant: #004b73;
+  --color-on-secondary-fixed: #2e1500;
+  --color-on-secondary-fixed-variant: #6d3a00;
+  --color-on-tertiary-fixed: #012200;
+  --color-on-tertiary-fixed-variant: #035300;
+
+  /* ── Indian Tricolor ── */
+  --color-saffron: #FF9933;
+  --color-india-green: #138808;
+  --color-india-navy: #000080;
+
+  /* ── Font families ── */
+  --font-headline: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-body: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-label: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
+
+  /* ── Animations ── */
+  --animate-spin-slow: spin-slow 8s linear infinite;
+  --animate-spin-reverse-slow: spin-reverse-slow 10s linear infinite;
+  --animate-spin-chakra: spin-chakra 15s linear infinite;
+  --animate-pulse-orbit: pulse-orbit 2s ease-in-out infinite;
+  --animate-bounce-custom: bounce-custom 1s ease-in-out infinite;
+}
+
+/* ── Keyframes ── */
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes spin-reverse-slow {
+  from { transform: rotate(360deg); }
+  to { transform: rotate(0deg); }
+}
+
+@keyframes spin-chakra {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes pulse-orbit {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 0.85;
+  }
+}
+
+@keyframes bounce-custom {
+  0%, 100% {
+    transform: translateY(0);
+    animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
+  }
+  50% {
+    transform: translateY(-12px);
+    animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+  }
+}
+
+/* ── Global base ── */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-background);
+  color: var(--color-on-surface);
+}
+
+/* ── Tricolor bar utility ── */
+
+.tricolor-bar {
+  height: 4px;
+  background: linear-gradient(
+    to right,
+    var(--color-saffron) 0%,
+    var(--color-saffron) 33.33%,
+    #ffffff 33.33%,
+    #ffffff 66.66%,
+    var(--color-india-green) 66.66%,
+    var(--color-india-green) 100%
+  );
+}
+
+/* ── Material Symbols configuration ── */
+
+.material-symbols-outlined {
+  font-variation-settings:
+    'FILL' 0,
+    'wght' 400,
+    'GRAD' 0,
+    'opsz' 24;
+}
+
+/* ── Thin scrollbar ── */
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-outline-variant) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: var(--color-outline-variant);
+  border-radius: 9999px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-outline);
+}
+
+/* ── Focus-visible for accessibility ── */
+
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* ── Selection ── */
+
+::selection {
+  background-color: var(--color-primary-fixed);
+  color: var(--color-primary);
+}
+
+/* ── Safe area padding for mobile nav ── */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0.5rem);
+}
+
+/* ── Filled icon variant ── */
+.material-symbols-outlined.filled {
+  font-variation-settings:
+    'FILL' 1,
+    'wght' 400,
+    'GRAD' 0,
+    'opsz' 24;
+}
+
+/* ── Range input styling ── */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  background: var(--color-surface-container-high);
+  border-radius: 9999px;
+  outline: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 97, 148, 0.3);
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 2px 8px rgba(0, 97, 148, 0.3);
+}
+
+/* ── Glassmorphism utility ── */
+.glass {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+/* ── Ambient shadow (blue-tinted) ── */
+.shadow-ambient {
+  box-shadow: 0 20px 50px rgba(0, 97, 148, 0.08);
+}
+
+/* ── No-line card (design system rule) ── */
+.card-ds {
+  border-radius: 1.5rem;
+  background-color: var(--color-surface-container-lowest);
+  box-shadow: 0 20px 50px rgba(0, 97, 148, 0.08);
+}
+
+/* ── Typing indicator for chat ── */
+@keyframes typing-dot {
+  0%, 60%, 100% { opacity: 0.3; transform: translateY(0); }
+  30% { opacity: 1; transform: translateY(-4px); }
+}
+
+.typing-dot {
+  animation: typing-dot 1.4s ease-in-out infinite;
+}
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
