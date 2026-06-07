@@ -7,6 +7,7 @@ const t = {
   nav: {
     dashboard: { en: 'Dashboard', hi: 'डैशबोर्ड' },
     schemes: { en: 'Schemes', hi: 'योजनाएं' },
+    scholarships: { en: 'Scholarships', hi: 'छात्रवृत्ति' },
     stocks: { en: 'Stocks', hi: 'स्टॉक्स' },
     crossover: { en: 'Crossover', hi: 'क्रॉसओवर' },
     alerts: { en: 'Alerts', hi: 'अलर्ट' },

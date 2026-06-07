@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "update:schemes": "node scripts/update_government_schemes.mjs"
+    "update:schemes": "node scripts/update_government_schemes.mjs",
+    "update:scholarships": "node scripts/daily_scraper.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

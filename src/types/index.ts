@@ -17,6 +17,13 @@ export interface UserProfile {
   occupation?: string;
   annual_income?: number;
   is_bpl?: boolean;
+  has_disability?: boolean;
+  education_level?: 'school' | 'diploma' | 'graduation' | 'postgraduation' | 'phd' | 'technical' | 'abroad';
+  current_course?: string;
+  institution_name?: string;
+  current_year?: string;
+  last_exam_percentage?: number;
+  is_hosteller?: boolean;
   pan_number?: string;
   aadhaar_last_four?: string;
   plan: SubscriptionPlan;

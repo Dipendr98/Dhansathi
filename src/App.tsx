@@ -10,6 +10,7 @@ const LoginPage = lazy(() => import('@/features/auth/LoginPage'));
 const SignupPage = lazy(() => import('@/features/auth/SignupPage'));
 const DashboardHome = lazy(() => import('@/features/dashboard/DashboardHome'));
 const SchemesPage = lazy(() => import('@/features/dashboard/SchemesPage'));
+const ScholarshipsPage = lazy(() => import('@/features/dashboard/ScholarshipsPage'));
 const StocksPage = lazy(() => import('@/features/dashboard/StocksPage'));
 const CrossoverPage = lazy(() => import('@/features/dashboard/CrossoverPage'));
 const AlertsPage = lazy(() => import('@/features/dashboard/AlertsPage'));
@@ -84,6 +85,7 @@ function App() {
           <Route path="/dashboard" element={<DashboardLayout />}>
             <Route index element={<DashboardHome />} />
             <Route path="schemes" element={<SchemesPage />} />
+            <Route path="scholarships" element={<ScholarshipsPage />} />
             <Route path="stocks" element={<StocksPage />} />
             <Route path="crossover" element={<CrossoverPage />} />
             <Route path="alerts" element={<AlertsPage />} />

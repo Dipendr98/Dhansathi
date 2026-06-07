@@ -6,7 +6,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { T } from '@/lib/translations';
 
 interface NavItem {
-  labelKey: 'dashboard' | 'schemes' | 'stocks' | 'crossover' | 'alerts' | 'dhanMitra' | 'askDhanSathi' | 'support' | 'taxCalculator' | 'budgetAnalyzer' | 'monthlyReports';
+  labelKey: 'dashboard' | 'schemes' | 'scholarships' | 'stocks' | 'crossover' | 'alerts' | 'dhanMitra' | 'askDhanSathi' | 'support' | 'taxCalculator' | 'budgetAnalyzer' | 'monthlyReports';
   icon: string;
   path: string;
   badge?: string;
@@ -16,6 +16,7 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { labelKey: 'dashboard', icon: 'dashboard', path: '/dashboard', sectionKey: 'main' },
   { labelKey: 'schemes', icon: 'account_balance', path: '/dashboard/schemes', badge: '8', sectionKey: 'main' },
+  { labelKey: 'scholarships', icon: 'school', path: '/dashboard/scholarships', sectionKey: 'main' },
   { labelKey: 'stocks', icon: 'trending_up', path: '/dashboard/stocks', sectionKey: 'main' },
   { labelKey: 'crossover', icon: 'swap_horiz', path: '/dashboard/crossover', sectionKey: 'main' },
   { labelKey: 'alerts', icon: 'notifications', path: '/dashboard/alerts', badge: '3', sectionKey: 'main' },
@@ -261,8 +262,8 @@ export default function DashboardLayout() {
         {([
           { icon: 'home', labelKey: 'home' as const, path: '/dashboard' },
           { icon: 'account_balance', labelKey: 'schemes' as const, path: '/dashboard/schemes' },
+          { icon: 'school', labelKey: 'scholarships' as const, path: '/dashboard/scholarships' },
           { icon: 'trending_up', labelKey: 'stocks' as const, path: '/dashboard/stocks' },
-          { icon: 'notifications', labelKey: 'alerts' as const, path: '/dashboard/alerts' },
           { icon: 'person', labelKey: 'profile' as const, path: '/dashboard/settings' },
         ]).map((item) => (
           <NavLink

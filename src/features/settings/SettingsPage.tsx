@@ -95,6 +95,18 @@ const OCCUPATIONS = [
   'Homemaker', 'Retired', 'Daily Wage Worker', 'Government Employee', 'Other',
 ];
 
+type EducationLevel = NonNullable<UserProfile['education_level']>;
+
+const EDUCATION_LEVELS = [
+  { value: 'school', label: 'School' },
+  { value: 'diploma', label: 'Diploma' },
+  { value: 'graduation', label: 'Graduation' },
+  { value: 'postgraduation', label: 'Post Graduation' },
+  { value: 'phd', label: 'PhD / Research' },
+  { value: 'technical', label: 'Technical / Professional' },
+  { value: 'abroad', label: 'Study Abroad' },
+];
+
 function getProfileFormFromUser(user?: UserProfile | null) {
   return {
     full_name: user?.full_name || '',
@@ -108,6 +120,13 @@ function getProfileFormFromUser(user?: UserProfile | null) {
     occupation: user?.occupation || '',
     annual_income: user?.annual_income?.toString() || '',
     is_bpl: user?.is_bpl || false,
+    has_disability: user?.has_disability || false,
+    education_level: (user?.education_level || '') as EducationLevel | '',
+    current_course: user?.current_course || '',
+    institution_name: user?.institution_name || '',
+    current_year: user?.current_year || '',
+    last_exam_percentage: user?.last_exam_percentage?.toString() || '',
+    is_hosteller: user?.is_hosteller || false,
   };
 }
 
@@ -218,6 +237,13 @@ export default function SettingsPage() {
       occupation: profileForm.occupation || undefined,
       annual_income: profileForm.annual_income ? Number(profileForm.annual_income) : undefined,
       is_bpl: profileForm.is_bpl,
+      has_disability: profileForm.has_disability,
+      education_level: profileForm.education_level ? profileForm.education_level as EducationLevel : undefined,
+      current_course: profileForm.current_course || undefined,
+      institution_name: profileForm.institution_name || undefined,
+      current_year: profileForm.current_year || undefined,
+      last_exam_percentage: profileForm.last_exam_percentage ? Number(profileForm.last_exam_percentage) : undefined,
+      is_hosteller: profileForm.is_hosteller,
     };
 
     try {
@@ -592,6 +618,135 @@ export default function SettingsPage() {
                   </button>
                   <span className="text-sm text-on-surface font-medium">{lang === 'hi' ? 'गरीबी रेखा से नीचे (BPL)' : 'Below Poverty Line (BPL)'}</span>
                 </div>
+
+                {/* Disability toggle */}
+                <div className="flex items-center gap-3 self-end pb-1">
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={profileForm.has_disability}
+                    onClick={() => updateProfileField('has_disability', !profileForm.has_disability)}
+                    className={cn(
+                      'relative w-11 h-6 rounded-full transition-colors duration-200',
+                      profileForm.has_disability ? 'bg-primary' : 'bg-surface-container-high',
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        'absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-md transition-transform duration-200',
+                        profileForm.has_disability && 'translate-x-5',
+                      )}
+                    />
+                  </button>
+                  <span className="text-sm text-on-surface font-medium">{lang === 'hi' ? 'दिव्यांग छात्र' : 'Student with disability'}</span>
+                </div>
+              </div>
+
+              <div className="mt-8 border-t border-outline-variant/20 pt-6">
+                <div className="flex items-center gap-2 mb-5">
+                  <span className="material-symbols-outlined text-primary text-xl">school</span>
+                  <div>
+                    <h5 className="font-headline font-bold text-on-surface">{lang === 'hi' ? 'छात्रवृत्ति शिक्षा विवरण' : 'Scholarship Education Details'}</h5>
+                    <p className="text-xs text-on-surface-variant mt-0.5">
+                      {lang === 'hi'
+                        ? 'DhanSathi इन विवरणों से लाइव छात्रवृत्ति मिलान बेहतर करेगा।'
+                        : 'DhanSathi uses these details to match live scholarships more accurately.'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div>
+                    <label className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1.5 block">
+                      {lang === 'hi' ? 'शिक्षा स्तर' : 'Education Level'}
+                    </label>
+                    <select
+                      value={profileForm.education_level}
+                      onChange={(e) => updateProfileField('education_level', e.target.value)}
+                      className="w-full px-4 py-2.5 rounded-xl bg-surface-container-low border border-outline-variant/40 text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 transition-shadow"
+                    >
+                      <option value="">{lang === 'hi' ? 'शिक्षा स्तर चुनें' : 'Select education level'}</option>
+                      {EDUCATION_LEVELS.map((level) => (
+                        <option key={level.value} value={level.value}>{level.label}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1.5 block">
+                      {lang === 'hi' ? 'कोर्स / कक्षा' : 'Course / Class'}
+                    </label>
+                    <input
+                      type="text"
+                      value={profileForm.current_course}
+                      onChange={(e) => updateProfileField('current_course', e.target.value)}
+                      className="w-full px-4 py-2.5 rounded-xl bg-surface-container-low border border-outline-variant/40 text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 transition-shadow"
+                      placeholder={lang === 'hi' ? 'जैसे B.Tech, Class 12, MBA' : 'e.g. B.Tech, Class 12, MBA'}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1.5 block">
+                      {lang === 'hi' ? 'संस्थान का नाम' : 'Institution Name'}
+                    </label>
+                    <input
+                      type="text"
+                      value={profileForm.institution_name}
+                      onChange={(e) => updateProfileField('institution_name', e.target.value)}
+                      className="w-full px-4 py-2.5 rounded-xl bg-surface-container-low border border-outline-variant/40 text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 transition-shadow"
+                      placeholder={lang === 'hi' ? 'स्कूल / कॉलेज / विश्वविद्यालय' : 'School / college / university'}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1.5 block">
+                      {lang === 'hi' ? 'वर्तमान वर्ष / सेमेस्टर' : 'Current Year / Semester'}
+                    </label>
+                    <input
+                      type="text"
+                      value={profileForm.current_year}
+                      onChange={(e) => updateProfileField('current_year', e.target.value)}
+                      className="w-full px-4 py-2.5 rounded-xl bg-surface-container-low border border-outline-variant/40 text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 transition-shadow"
+                      placeholder={lang === 'hi' ? 'जैसे 1st year, Sem 3' : 'e.g. 1st year, Sem 3'}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-1.5 block">
+                      {lang === 'hi' ? 'पिछले परीक्षा प्रतिशत' : 'Last Exam Percentage'}
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={profileForm.last_exam_percentage}
+                      onChange={(e) => updateProfileField('last_exam_percentage', e.target.value)}
+                      className="w-full px-4 py-2.5 rounded-xl bg-surface-container-low border border-outline-variant/40 text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 transition-shadow"
+                      placeholder="e.g. 82"
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-3 self-end pb-1">
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={profileForm.is_hosteller}
+                      onClick={() => updateProfileField('is_hosteller', !profileForm.is_hosteller)}
+                      className={cn(
+                        'relative w-11 h-6 rounded-full transition-colors duration-200',
+                        profileForm.is_hosteller ? 'bg-primary' : 'bg-surface-container-high',
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          'absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-md transition-transform duration-200',
+                          profileForm.is_hosteller && 'translate-x-5',
+                        )}
+                      />
+                    </button>
+                    <span className="text-sm text-on-surface font-medium">{lang === 'hi' ? 'हॉस्टल में रहते हैं' : 'Living in hostel'}</span>
+                  </div>
+                </div>
               </div>
 
               {/* Save button */}
@@ -627,7 +782,7 @@ export default function SettingsPage() {
               </div>
 
               <p className="text-xs text-on-surface-variant mt-4">
-                Your profile data is used to match you with eligible government schemes and personalize your experience.
+                Your profile data is used to match you with eligible government schemes, live scholarships, and personalized AI answers.
                 It is stored locally and not shared with third parties.
               </p>
             </motion.div>

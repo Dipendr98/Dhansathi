@@ -67,6 +67,36 @@ interface NvidiaChatResponse {
   }>;
 }
 
+type ScholarshipLevel = 'school' | 'diploma' | 'graduation' | 'postgraduation' | 'phd' | 'technical' | 'abroad';
+
+interface LiveScholarship {
+  id: string;
+  name: string;
+  provider: 'central' | 'state' | 'public-sector';
+  department: string;
+  education_levels: ScholarshipLevel[];
+  target_groups: string[];
+  benefits: string;
+  eligibility: string;
+  application_url: string;
+  portal: string;
+  specifications_url?: string;
+  studentApplicationCloseDate?: string;
+  deadline_hint: string;
+  status: 'open' | 'expired';
+}
+
+interface ScholarshipFeed {
+  meta?: {
+    source: string;
+    source_url?: string;
+    fetched_at: string;
+    total: number;
+  };
+  scholarships: LiveScholarship[];
+  error?: string;
+}
+
 const STOCK_ALIASES: Record<string, string> = {
   reliance: 'RELIANCE',
   realiance: 'RELIANCE',
@@ -104,6 +134,19 @@ function getAge(dateOfBirth?: string): number | null {
 
 function humanize(value?: string): string {
   return value ? value.replace(/_/g, ' ') : '';
+}
+
+function formatEducationLevel(value?: string): string {
+  const labels: Record<string, string> = {
+    school: 'School',
+    diploma: 'Diploma',
+    graduation: 'Graduation',
+    postgraduation: 'Post Graduation',
+    phd: 'PhD / Research',
+    technical: 'Technical / Professional',
+    abroad: 'Study Abroad',
+  };
+  return value ? labels[value] || humanize(value) : '';
 }
 
 function formatStockPrice(stock: StockData): string {
@@ -261,6 +304,80 @@ function getPersonalizedStockIdeas(user: UserProfile | null, liveStocks: StockDa
     .slice(0, 5);
 }
 
+function matchesScholarshipProfile(scholarship: LiveScholarship, user: UserProfile | null): boolean {
+  if (!user) return true;
+
+  const text = `${scholarship.name} ${scholarship.department} ${scholarship.target_groups.join(' ')}`.toLowerCase();
+  const levelMatch = user.education_level
+    ? scholarship.education_levels.includes(user.education_level)
+    : true;
+  const category = user.category?.toLowerCase();
+  const categoryMatch =
+    !category ||
+    category === 'general' ||
+    text.includes(category) ||
+    text.includes('eligible indian') ||
+    text.includes('merit');
+  const disabilityMatch = user.has_disability ? text.includes('disabil') || text.includes('specially') : true;
+  const genderMatch = user.gender === 'female' ? true : !text.includes('girl');
+
+  return levelMatch && categoryMatch && disabilityMatch && genderMatch;
+}
+
+function buildScholarshipContext(user: UserProfile | null, feed: ScholarshipFeed | null): string {
+  if (!feed?.scholarships?.length) {
+    return [
+      'Live Scholarship Context:',
+      'No live scholarship feed is available in this chat turn. Ask the user to open Scholarships or retry.',
+    ].join('\n');
+  }
+
+  const relevant = feed.scholarships
+    .filter((scholarship) => matchesScholarshipProfile(scholarship, user))
+    .slice(0, 18);
+  const allScholarships = feed.scholarships.slice(0, 40);
+  const selected = relevant.length ? relevant : allScholarships;
+
+  const lines = selected.map((scholarship, index) => {
+    const deadline = scholarship.studentApplicationCloseDate || scholarship.deadline_hint || 'Check official portal';
+    const levels = scholarship.education_levels.map(formatEducationLevel).join(', ');
+    const details = scholarship.specifications_url || scholarship.application_url;
+    return `${index + 1}. ${scholarship.name} | ${scholarship.department} | Levels: ${levels} | Groups: ${scholarship.target_groups.join(', ')} | Deadline: ${deadline} | Details: ${details}`;
+  });
+
+  return [
+    'Live Scholarship Context from official source:',
+    `Source: ${feed.meta?.source || 'National Scholarship Portal'} (${feed.meta?.source_url || 'official portal'})`,
+    `Fetched at: ${feed.meta?.fetched_at || 'current request'}; open scholarships available: ${feed.scholarships.length}`,
+    user?.education_level
+      ? `User education level for matching: ${formatEducationLevel(user.education_level)}`
+      : 'User education level is missing; ask them to update Settings for better matches.',
+    'Relevant/open scholarships DhanSathi can discuss:',
+    ...lines,
+    'Important: scholarship dates and rules change. Always tell the user to verify final eligibility, documents, and deadlines on the official portal/specification link.',
+  ].join('\n');
+}
+
+async function loadLiveScholarshipFeed(): Promise<ScholarshipFeed | null> {
+  const day = new Date().toISOString().slice(0, 10);
+  const cacheKey = `dhansathi-live-scholarships:${day}`;
+
+  try {
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) return JSON.parse(cached) as ScholarshipFeed;
+
+    const response = await fetch(`/api/scholarships?day=${day}`, { cache: 'no-store' });
+    if (!response.ok) throw new Error(`Scholarship feed failed: ${response.status}`);
+    const feed = await response.json() as ScholarshipFeed;
+    if (feed.error) throw new Error(feed.error);
+    localStorage.setItem(cacheKey, JSON.stringify(feed));
+    return feed;
+  } catch (error) {
+    console.warn('[ChatPage] Scholarship context lookup failed:', error);
+    return null;
+  }
+}
+
 function buildPersonalizationContext(user: UserProfile | null, liveStocks: StockData[]): string {
   if (!user) {
     return [
@@ -280,6 +397,13 @@ function buildPersonalizationContext(user: UserProfile | null, liveStocks: Stock
     `Occupation: ${humanize(user.occupation) || 'Not provided'}`,
     `Annual income: ${user.annual_income != null ? formatINR(user.annual_income) : 'Not provided'}`,
     `BPL: ${user.is_bpl ? 'Yes' : 'No'}`,
+    `Disability: ${user.has_disability ? 'Yes' : 'No'}`,
+    `Education level: ${formatEducationLevel(user.education_level) || 'Not provided'}`,
+    `Current course/class: ${user.current_course || 'Not provided'}`,
+    `Institution: ${user.institution_name || 'Not provided'}`,
+    `Current year/semester: ${user.current_year || 'Not provided'}`,
+    `Last exam percentage: ${user.last_exam_percentage != null ? `${user.last_exam_percentage}%` : 'Not provided'}`,
+    `Hosteller: ${user.is_hosteller ? 'Yes' : 'No'}`,
   ];
 
   const matches = calculateSchemeMatches(user).slice(0, 5);
@@ -359,16 +483,16 @@ const INITIAL_MESSAGES: ChatMessage[] = [
 
 const SUGGESTED_PROMPTS_EN = [
   { label: 'Check my eligibility', icon: 'person_search' },
+  { label: 'Find scholarships for me', icon: 'school' },
   { label: 'Stock analysis', icon: 'monitoring' },
   { label: 'SIP calculator', icon: 'calculate' },
-  { label: 'Market update', icon: 'newspaper' },
 ];
 
 const SUGGESTED_PROMPTS_HI = [
   { label: 'मेरी पात्रता जांचें', icon: 'person_search' },
+  { label: 'मेरे लिए छात्रवृत्ति खोजें', icon: 'school' },
   { label: 'स्टॉक विश्लेषण', icon: 'monitoring' },
   { label: 'SIP कैलकुलेटर', icon: 'calculate' },
-  { label: 'बाजार अपडेट', icon: 'newspaper' },
 ];
 
 /* ── Typing Indicator ──────────────────────────── */
@@ -395,12 +519,21 @@ function TypingIndicator() {
 
 /* ── Component ─────────────────────────────────── */
 
-function buildSystemPrompt(user: UserProfile | null, isHindi: boolean = false, liveStockContext = '', liveStocks: StockData[] = [], proTools: ProToolsState | null = null): string {
+function buildSystemPrompt(
+  user: UserProfile | null,
+  isHindi: boolean = false,
+  liveStockContext = '',
+  liveStocks: StockData[] = [],
+  proTools: ProToolsState | null = null,
+  scholarshipContext = '',
+): string {
   let prompt = `You are DhanSathi, a helpful financial assistant for users in India. You help with government scheme eligibility, stock analysis, SIP calculations, tax calculations, budget analysis, and personalized financial guidance.
 
-Use the saved profile and DhanSathi app context below whenever answering. If the user asks about schemes, recommend the strongest matches first, explain why they match, mention missing profile details if any, and suggest the next action. If the user asks about stocks or trades, use the live stock context first when available. Include CMP, change %, volume, delivery %, RSI, trend, signal, entry discipline, stop-loss thinking, position sizing, and avoid guaranteed-profit language. Always include a short reminder that stock ideas are educational and not financial advice.
+Use the saved profile and DhanSathi app context below whenever answering. If the user asks about scholarships, use the live scholarship context first, match by education level, category, disability, gender, income and state where possible, and mention missing profile details. ALWAYS provide the direct application or details URL for each suggested scholarship using markdown links (e.g. [Apply Here](URL)) so the user can easily click and apply. If the user asks about schemes, recommend the strongest matches first, explain why they match, mention missing profile details if any, and suggest the next action. If the user asks about stocks or trades, use the live stock context first when available. Include CMP, change %, volume, delivery %, RSI, trend, signal, entry discipline, stop-loss thinking, position sizing, and avoid guaranteed-profit language. Always include a short reminder that stock ideas are educational and not financial advice.
 
 ${buildPersonalizationContext(user, liveStocks)}
+
+${scholarshipContext}
 
 ${liveStockContext}`;
 
@@ -526,19 +659,30 @@ export default function ChatPage() {
     let askedStock: StockData | null = null;
     let liveStockContext = '';
     let liveStocks: StockData[] = [];
+    let scholarshipFeed: ScholarshipFeed | null = null;
+    let scholarshipContext = '';
     try {
-      liveStocks = await fetchLiveStocks();
+      const [stocks, scholarships] = await Promise.all([
+        fetchLiveStocks().catch((error) => {
+          console.warn('[ChatPage] Stock list lookup failed:', error);
+          return [] as StockData[];
+        }),
+        loadLiveScholarshipFeed(),
+      ]);
+      liveStocks = stocks;
+      scholarshipFeed = scholarships;
+      scholarshipContext = buildScholarshipContext(effectiveUser, scholarshipFeed);
       askedStock = await resolveAskedStock(messageText);
       liveStockContext = askedStock ? buildLiveStockContext(askedStock) : '';
     } catch (error) {
-      console.warn('[ChatPage] Stock context lookup failed:', error);
+      console.warn('[ChatPage] Context lookup failed:', error);
     }
 
     const addFallbackResponse = (includeNotice = false) => {
       const aiResponse: ChatMessage = {
         id: nextMessageId(),
         role: 'ai',
-        content: `${includeNotice ? 'Live AI is unavailable right now, so I am using DhanSathi smart mode.\n\n' : ''}${getAIResponse(messageText, effectiveUser, askedStock, liveStocks)}`,
+        content: `${includeNotice ? 'Live AI is unavailable right now, so I am using DhanSathi smart mode.\n\n' : ''}${getAIResponse(messageText, effectiveUser, askedStock, liveStocks, scholarshipFeed)}`,
         timestamp: new Date().toLocaleTimeString('en-US', {
           hour: 'numeric',
           minute: '2-digit',
@@ -559,7 +703,7 @@ export default function ChatPage() {
         }));
 
       const aiResult = await requestDhanSathiAI([
-          { role: "system", content: buildSystemPrompt(effectiveUser, isHindi, liveStockContext, liveStocks, proTools) },
+          { role: "system", content: buildSystemPrompt(effectiveUser, isHindi, liveStockContext, liveStocks, proTools, scholarshipContext) },
           ...chatHistory,
           { role: "user", content: liveStockContext ? `${messageText}\n\n${liveStockContext}` : messageText }
         ]);
@@ -571,7 +715,7 @@ export default function ChatPage() {
         {
           id: responseId,
           role: 'ai',
-          content: aiResult.content || getAIResponse(messageText, effectiveUser, askedStock, liveStocks),
+          content: aiResult.content || getAIResponse(messageText, effectiveUser, askedStock, liveStocks, scholarshipFeed),
           reasoning: aiResult.reasoning,
           timestamp: new Date().toLocaleTimeString('en-US', {
             hour: 'numeric',
@@ -855,12 +999,21 @@ export default function ChatPage() {
 
 /* ── Mock AI Responses ─────────────────────────── */
 
-function getAIResponse(userInput: string, user: UserProfile | null, askedStock: StockData | null = null, liveStocks: StockData[] = []): string {
+function getAIResponse(
+  userInput: string,
+  user: UserProfile | null,
+  askedStock: StockData | null = null,
+  liveStocks: StockData[] = [],
+  scholarshipFeed: ScholarshipFeed | null = null,
+): string {
   const input = userInput.toLowerCase();
   const matches = user ? calculateSchemeMatches(user).slice(0, 3) : [];
   const stockIdeas = getPersonalizedStockIdeas(user, liveStocks).slice(0, 3);
+  const scholarshipMatches = (scholarshipFeed?.scholarships || [])
+    .filter((scholarship) => matchesScholarshipProfile(scholarship, user))
+    .slice(0, 5);
   const profileIntro = user
-    ? `Using your saved profile (${user.state || 'state not set'}, ${humanize(user.occupation) || 'occupation not set'}, income ${user.annual_income != null ? formatINR(user.annual_income) : 'not set'}), `
+    ? `Using your saved profile (${user.state || 'state not set'}, ${formatEducationLevel(user.education_level) || 'education not set'}, ${humanize(user.occupation) || 'occupation not set'}, income ${user.annual_income != null ? formatINR(user.annual_income) : 'not set'}), `
     : '';
 
   if (input.includes('salary') || input.includes('income') || input.includes('वेतन') || input.includes('आय')) {
@@ -881,6 +1034,31 @@ function getAIResponse(userInput: string, user: UserProfile | null, askedStock: 
       `- ${stock.symbol}: ${formatSignal(stock.signal)} signal, CMP ${formatStockPrice(stock)}, RSI ${stock.rsi_14}, PE ${stock.pe_ratio}`,
     ).join('\n');
     return `${profileIntro}here are stock ideas from the DhanSathi screener:\n\n${ideas || '- I could not identify the stock name/symbol. Try asking "explain RELIANCE stock" or "TCS RSI signal".'}\n\nFor a master stock view, ask with a company name or NSE symbol. I will fetch CMP, change %, volume, RSI, SMA trend and signal. Use this for education only. Keep position size small, define a stop-loss before entry, and do not trade without your own confirmation.`;
+  }
+
+  if (
+    input.includes('scholarship') ||
+    input.includes('student') ||
+    input.includes('college') ||
+    input.includes('graduation') ||
+    input.includes('post graduation') ||
+    input.includes('छात्रवृत्ति')
+  ) {
+    const summary = scholarshipMatches.map((scholarship) => {
+      const deadline = scholarship.studentApplicationCloseDate || scholarship.deadline_hint || 'check official portal';
+      const details = scholarship.specifications_url || scholarship.application_url;
+      return `- ${scholarship.name}: ${scholarship.department}. Levels: ${scholarship.education_levels.map(formatEducationLevel).join(', ')}. Deadline: ${deadline}. Details: ${details}`;
+    }).join('\n');
+
+    const missing = [
+      !user?.education_level ? 'education level' : '',
+      !user?.current_course ? 'course/class' : '',
+      !user?.last_exam_percentage ? 'last exam percentage' : '',
+      !user?.category ? 'category' : '',
+      !user?.annual_income ? 'annual income' : '',
+    ].filter(Boolean).join(', ');
+
+    return `${profileIntro}these live scholarships look relevant from the current NSP feed:\n\n${summary || '- I could not load live scholarships in smart mode right now. Please open the Scholarships page or try again.'}\n\n${missing ? `To improve matching, update these fields in Settings: ${missing}.\n\n` : ''}Always verify final eligibility, documents, and dates on the official portal before applying.`;
   }
 
   if (input.includes('sip') || input.includes('calculator')) {

@@ -1,0 +1,151 @@
+State: Andhra Pradesh
+Main Scholarship Portal: https://jnanabhumi.ap.gov.in/
+Social Welfare / Post Matric Source: https://socialwelfare.apcfss.in/
+Education Department: https://cse.ap.gov.in/
+
+State: Arunachal Pradesh
+Main Scholarship / Higher Education Source: https://apdhte.nic.in/
+Education Department: https://education.arunachal.gov.in/
+State Government Portal: https://arunachalpradesh.gov.in/
+
+State: Assam
+Main Higher Education Scholarship Source: https://directorateofhighereducation.assam.gov.in/
+Education Department: https://education.assam.gov.in/
+State Government Portal: https://assam.gov.in/
+
+State: Bihar
+Main Scholarship Portal: https://pmsonline.bihar.gov.in/
+Post Matric / Institute Portal: https://instpmsonline.bihar.gov.in/
+School/10th/12th Incentive Schemes: https://medhasoft.bihar.gov.in/
+Education Department: https://state.bihar.gov.in/educationbihar/
+
+State: Chhattisgarh
+Main Post Matric Scholarship Portal: https://postmatric-scholarship.cg.nic.in/
+School Scholarship Portal: https://schoolscholarship.cg.nic.in/
+Education Department: https://eduportal.cg.nic.in/
+State Government Portal: https://cgstate.gov.in/
+
+State: Goa
+Main Higher Education Source: https://dhe.goa.gov.in/
+Education Department: https://education.goa.gov.in/
+State Government Portal: https://www.goa.gov.in/
+
+State: Gujarat
+Main Scholarship Portal: https://gssp.gujarat.gov.in/
+Digital Gujarat Portal: https://www.digitalgujarat.gov.in/
+Education Department: https://gujarat-education.gov.in/
+
+State: Haryana
+Main Scholarship Portal: https://harchhatravratti.highereduhry.ac.in/
+Higher Education Department: https://highereduhry.ac.in/
+Education Department: https://schooleducationharyana.gov.in/
+
+State: Himachal Pradesh
+Main Scholarship Portal: https://hpepass.cgg.gov.in/
+Education Department: https://education.hp.gov.in/
+Higher Education: https://himachal.nic.in/index1.php?lang=1&dpt_id=5
+
+State: Jharkhand
+Main Scholarship Portal: https://ekalyan.cgg.gov.in/
+State Government Portal: https://www.jharkhand.gov.in/
+Education Department: https://education.jharkhand.gov.in/
+
+State: Karnataka
+Main Scholarship Portal: https://ssp.postmatric.karnataka.gov.in/
+State Scholarship Portal: https://ssp.karnataka.gov.in/
+Education Department: https://schooleducation.karnataka.gov.in/
+State Government Portal: https://karnataka.gov.in/
+
+State: Kerala
+Main Scholarship Portal: https://egrantz.kerala.gov.in/
+DCE Scholarship Portal: https://www.dcescholarship.kerala.gov.in/
+Higher Education Department: https://highereducation.kerala.gov.in/
+Education Department: https://education.kerala.gov.in/
+
+State: Madhya Pradesh
+Main Scholarship Portal: https://scholarshipportal.mp.nic.in/
+Higher Education Scholarship Portal: https://hescholarship.mp.gov.in/
+Education Department: https://educationportal.mp.gov.in/
+State Government Portal: https://mp.gov.in/
+
+State: Maharashtra
+Main Scholarship Portal: https://mahadbt.maharashtra.gov.in/
+Higher and Technical Education: https://htedu.maharashtra.gov.in/
+School Education Department: https://education.maharashtra.gov.in/
+State Government Portal: https://www.maharashtra.gov.in/
+
+State: Manipur
+Main Education Source: https://manipureducation.gov.in/
+Higher Education Department: https://dhemanipur.gov.in/
+State Government Portal: https://manipur.gov.in/
+
+State: Meghalaya
+Main Education Source: https://megeducation.gov.in/
+State Government Portal: https://meghalaya.gov.in/
+
+State: Mizoram
+Main Scholarship Portal: https://scholarships.mizoram.gov.in/
+Education Department: https://education.mizoram.gov.in/
+State Government Portal: https://mizoram.gov.in/
+
+State: Nagaland
+Main Scholarship Portal: https://scholarship.nagaland.gov.in/
+Higher Education Department: https://highereducation.nagaland.gov.in/
+State Government Portal: https://nagaland.gov.in/
+
+State: Odisha
+Main Scholarship Portal: https://scholarship.odisha.gov.in/
+Education Department: https://osepa.odisha.gov.in/
+Higher Education Department: https://dhe.odisha.gov.in/
+State Government Portal: https://odisha.gov.in/
+
+State: Punjab
+Main Scholarship Portal: https://scholarships.punjab.gov.in/
+State Government Portal: https://punjab.gov.in/
+Education Department: https://ssapunjab.org/
+
+State: Rajasthan
+Main Social Justice Scholarship Source: https://sje.rajasthan.gov.in/
+SSO Portal: https://sso.rajasthan.gov.in/
+Higher Education Department: https://hte.rajasthan.gov.in/
+State Government Portal: https://rajasthan.gov.in/
+
+State: Sikkim
+Main State Portal: https://sikkim.gov.in/
+Education Department: https://sikkimhrdd.org/
+State Services Portal: https://eservices.sikkim.gov.in/
+
+State: Tamil Nadu
+Main Scholarship Portal: https://ssp.tn.gov.in/
+TNeGA Scholarship Source: https://ssp24-25.tnega.org/
+Education Department: https://tnschools.gov.in/
+Higher Education Department: https://www.tn.gov.in/department/20
+
+State: Telangana
+Main Scholarship Portal: https://telanganaepass.cgg.gov.in/
+Education Department: https://schooledu.telangana.gov.in/
+Higher Education Department: https://higheredn.telangana.gov.in/
+State Government Portal: https://www.telangana.gov.in/
+
+State: Tripura
+Main Scholarship Portal: https://scholarship.tripura.gov.in/
+Higher Education Department: https://highereducation.tripura.gov.in/
+Education Department: https://education.tripura.gov.in/
+State Government Portal: https://tripura.gov.in/
+
+State: Uttar Pradesh
+Main Scholarship Portal: https://scholarship.up.gov.in/
+Social Welfare Department: https://socialwelfareup.upsdc.gov.in/
+Education Department: https://basiceducation.up.gov.in/
+State Government Portal: https://up.gov.in/
+
+State: Uttarakhand
+Main Scholarship Portal: https://escholarship.uk.gov.in/
+Education Department: https://education.uk.gov.in/
+State Government Portal: https://uk.gov.in/
+
+State: West Bengal
+Main SC/ST/OBC Scholarship Portal: https://oasis.gov.in/
+SVMCM Scholarship Portal: https://svmcm.wbhed.gov.in/
+School Education Scholarship Portal: https://banglarshiksha.wb.gov.in/scholarships/
+Higher Education Department: https://wbhed.gov.in/

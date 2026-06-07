@@ -2,9 +2,53 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import path from 'path'
+import type { IncomingMessage, ServerResponse } from 'node:http'
+import { pathToFileURL } from 'node:url'
+
+type ScholarshipApiModule = {
+  default: (
+    req: IncomingMessage & { query?: Record<string, string> },
+    res: ServerResponse & {
+      status: (code: number) => ServerResponse & { json: (payload: unknown) => void };
+      json: (payload: unknown) => void;
+    },
+  ) => Promise<void>;
+}
+
+function scholarshipApiDevPlugin() {
+  return {
+    name: 'scholarship-api-dev',
+    configureServer(server: { middlewares: { use: (path: string, handler: (req: IncomingMessage, res: ServerResponse) => void) => void } }) {
+      server.middlewares.use('/api/scholarships', (req, res) => {
+        const requestUrl = new URL(req.url || '/', 'http://localhost');
+        const query = Object.fromEntries(requestUrl.searchParams.entries());
+
+        const apiRes = Object.assign(res, {
+          status(code: number) {
+            res.statusCode = code;
+            return apiRes;
+          },
+          json(payload: unknown) {
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify(payload));
+          },
+        });
+
+        const modulePath = pathToFileURL(path.resolve(__dirname, 'api/scholarships.js')).href;
+        import(/* @vite-ignore */ modulePath)
+          .then((mod: ScholarshipApiModule) => mod.default(Object.assign(req, { query }), apiRes))
+          .catch((error: Error) => {
+            res.statusCode = 500;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({ error: error.message }));
+          });
+      });
+    },
+  };
+}
 
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  plugins: [react(), tailwindcss(), scholarshipApiDevPlugin()],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
