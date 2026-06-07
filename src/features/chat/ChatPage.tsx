@@ -396,7 +396,7 @@ function TypingIndicator() {
 /* ── Component ─────────────────────────────────── */
 
 function buildSystemPrompt(user: UserProfile | null, isHindi: boolean = false, liveStockContext = '', liveStocks: StockData[] = [], proTools: ProToolsState | null = null): string {
-  let prompt = `You are DhanSathi, a helpful financial assistant for users in India. You help with government scheme eligibility, stock analysis, SIP calculations, and personalized financial guidance.
+  let prompt = `You are DhanSathi, a helpful financial assistant for users in India. You help with government scheme eligibility, stock analysis, SIP calculations, tax calculations, budget analysis, and personalized financial guidance.
 
 Use the saved profile and DhanSathi app context below whenever answering. If the user asks about schemes, recommend the strongest matches first, explain why they match, mention missing profile details if any, and suggest the next action. If the user asks about stocks or trades, use the live stock context first when available. Include CMP, change %, volume, delivery %, RSI, trend, signal, entry discipline, stop-loss thinking, position sizing, and avoid guaranteed-profit language. Always include a short reminder that stock ideas are educational and not financial advice.
 
@@ -409,7 +409,10 @@ ${liveStockContext}`;
     const totalExp = proTools.budgetExpenses.reduce((a, b) => a + b.amount, 0);
     const totalSav = proTools.budgetSavings.reduce((a, b) => a + b.amount, 0);
     
-    prompt += `\n\nUser's Pro Tools Data:\n- Budget: Income ₹${totalIncome}, Expenses ₹${totalExp}, Savings ₹${totalSav}.\n- Tax Info: ${proTools.taxRegime} regime, ₹${proTools.taxIncome} gross income, ₹${proTools.taxSec80c} 80C deduction, ₹${proTools.taxSec80d} 80D deduction.\nUse this info to give customized responses.`;
+    prompt += `\n\nUser's Pro Tools Data (from the DhanSathi Tax Calculator and Budget Analyzer):
+- Budget: Total Income ₹${totalIncome}, Total Expenses ₹${totalExp}, Total Savings ₹${totalSav}.
+- Tax Calculator: ${proTools.taxRegime} regime selected. Gross Income: ₹${proTools.taxIncome}, 80C: ₹${proTools.taxSec80c}, 80D: ₹${proTools.taxSec80d}, NPS: ₹${proTools.taxNps}, Home Loan: ₹${proTools.taxHomeLoan}.
+If the user asks about their taxes, tax calculator, or budget, explicitly acknowledge that you have fetched their record and use these exact numbers to provide customized advice.`;
   }
 
   prompt += `\n\nYou are bilingual in Hindi and English. If the user writes in Hindi (Devanagari script or Hinglish), respond in Hindi. If they write in English, respond in English. Use simple, friendly language that a common Indian citizen can understand. Use ₹ for Indian currency.`;
@@ -893,6 +896,10 @@ function getAIResponse(userInput: string, user: UserProfile | null, askedStock: 
       `- ${match.scheme.name} (${match.score}% match): ${match.scheme.benefits}. Why: ${match.reasons.slice(0, 2).join(', ') || 'profile match'}`,
     ).join('\n');
     return `${profileIntro}these schemes look most relevant:\n\n${schemeSummary || '- I need your state, income, age, category, and occupation in Settings to match schemes accurately.'}\n\nOpen each scheme page, confirm documents, and check the official application link before applying.`;
+  }
+
+  if (input.includes('tax') || input.includes('budget')) {
+    return `I can definitely help with your taxes and budget! Since I am in DhanSathi smart mode right now, please make sure you've entered your details in the Tax Calculator or Budget Analyzer tools. Once the live AI is back, I will give you personalized advice based exactly on the numbers you saved there!`;
   }
 
   return 'That\'s a great question! I\'m analyzing the relevant financial data to give you the most accurate response. For personalized advice, please make sure your profile is updated. Is there anything specific about government schemes, stocks, or financial planning I can help with?';
