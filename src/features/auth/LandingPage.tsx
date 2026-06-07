@@ -95,9 +95,9 @@ const NAV_LINKS = ['Features', 'Access', 'About'];
 const FOOTER_PRODUCT = ['Scheme Finder', 'Live Scholarships', 'Stock Screener', 'DhanMitra AI', 'Crossover Alerts'];
 const FOOTER_COMPANY = ['About', 'Blog', 'Careers', 'Press Kit'];
 const FOOTER_SOCIAL = [
-  { icon: 'public', label: 'Website' },
-  { icon: 'share', label: 'Twitter' },
-  { icon: 'groups', label: 'LinkedIn' },
+  { icon: 'mail', label: 'Email', href: 'mailto:dependra98@gmail.com' },
+  { icon: 'call', label: 'Phone', href: 'tel:+917408866422' },
+  { icon: 'groups', label: 'LinkedIn', href: 'https://www.linkedin.com/in/dipendra-kasaudhan7408' },
 ];
 
 /* ── Component ─────────────────────────────────── */
@@ -138,6 +138,9 @@ export default function LandingPage() {
                 {link}
               </a>
             ))}
+            <Link to="/docs" className="text-sm font-semibold text-on-surface-variant hover:text-primary transition-colors no-underline">
+              Docs
+            </Link>
           </nav>
 
           {/* Actions */}
@@ -615,7 +618,10 @@ export default function LandingPage() {
                 {FOOTER_SOCIAL.map((s) => (
                   <a
                     key={s.label}
-                    href="#"
+                    href={s.href}
+                    target="_blank"
+                    rel="noreferrer"
+                    title={s.label}
                     aria-label={s.label}
                     className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors no-underline"
                   >
@@ -627,16 +633,23 @@ export default function LandingPage() {
           </div>
 
           <div className="mt-16 pt-8 border-t border-white/10 flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0">
-            <p className="text-xs text-white/40">
-              &copy; 2024 Digital Sovereign Financial Services. All rights reserved.
-            </p>
+            <div className="text-xs text-white/40 flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
+              <span>&copy; 2024 Digital Sovereign Financial Services. All rights reserved.</span>
+              <span className="hidden sm:inline">•</span>
+              <a href="mailto:dependra98@gmail.com" className="text-white/40 hover:text-white/70 transition-colors no-underline">dependra98@gmail.com</a>
+              <span className="hidden sm:inline">•</span>
+              <a href="tel:+917408866422" className="text-white/40 hover:text-white/70 transition-colors no-underline">+91 74088 66422</a>
+            </div>
             <div className="flex space-x-6">
-              <a href="#" className="text-xs text-white/40 hover:text-white/70 transition-colors no-underline">
+              <a href="https://www.linkedin.com/in/dipendra-kasaudhan7408" target="_blank" rel="noreferrer" className="text-xs text-white/40 hover:text-white/70 transition-colors no-underline">
+                LinkedIn
+              </a>
+              <Link to="/privacy" className="text-xs text-white/40 hover:text-white/70 transition-colors no-underline">
                 Privacy Policy
-              </a>
-              <a href="#" className="text-xs text-white/40 hover:text-white/70 transition-colors no-underline">
+              </Link>
+              <Link to="/terms" className="text-xs text-white/40 hover:text-white/70 transition-colors no-underline">
                 Terms of Service
-              </a>
+              </Link>
             </div>
           </div>
         </div>
@@ -647,7 +660,7 @@ export default function LandingPage() {
         {[
           { icon: 'home', label: 'Home', href: '#' },
           { icon: 'auto_awesome', label: 'Features', href: '#features' },
-          { icon: 'verified', label: 'Access', href: '#access' },
+          { icon: 'menu_book', label: 'Docs', to: '/docs' },
           { icon: 'login', label: 'Login', to: '/login' },
         ].map((item) =>
           item.to ? (

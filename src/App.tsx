@@ -28,6 +28,9 @@ const AuthCallback = lazy(() => import('@/features/auth/AuthCallback'));
 const PrivacyPolicy = lazy(() => import('@/features/legal/PrivacyPolicy'));
 const TermsConditions = lazy(() => import('@/features/legal/TermsConditions'));
 
+// Docs Page
+const DocsPage = lazy(() => import('@/features/docs/DocsPage'));
+
 // Admin panel (lazy loaded)
 const AdminLayout = lazy(() => import('@/layouts/AdminLayout'));
 const AdminDashboard = lazy(() => import('@/features/admin/AdminDashboard'));
@@ -111,9 +114,10 @@ function App() {
             <Route path="settings" element={<AdminSettings />} />
             <Route path="queries" element={<AdminQueries />} />
           </Route>
-          {/* Legal Pages */}
+          {/* Legal & Docs Pages */}
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<TermsConditions />} />
+          <Route path="/docs" element={<DocsPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </PageTransitionLoader>

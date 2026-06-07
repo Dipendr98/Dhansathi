@@ -124,3 +124,35 @@ code {
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background-color: var(--accent);
 }
+
+@media print {
+  /* Hide unnecessary elements during print */
+  .print-hidden, 
+  nav, 
+  aside,
+  header {
+    display: none !important;
+  }
+  
+  /* Ensure background colors and shadows are printed */
+  body {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    background: white !important;
+  }
+  
+  /* Reset container widths for full page print */
+  #root, .tax-calculator-container {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+  }
+  
+  /* Prevent page breaks inside cards */
+  .bg-white, .bg-surface-container, .bg-gradient-to-br {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+}
