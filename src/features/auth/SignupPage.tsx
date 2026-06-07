@@ -27,7 +27,7 @@ const cardVariants = {
 
 export default function SignupPage() {
   const navigate = useNavigate();
-  const { signUp } = useAuthStore();
+  const { signUp, signInWithGoogle } = useAuthStore();
   const {
     register,
     handleSubmit,
@@ -41,6 +41,14 @@ export default function SignupPage() {
       navigate('/dashboard');
     } catch (error: any) {
       toast.error(error.message || 'Failed to create account');
+    }
+  };
+
+  const handleGoogleAuth = async () => {
+    try {
+      await signInWithGoogle();
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to connect to Google');
     }
   };
 
@@ -81,6 +89,7 @@ export default function SignupPage() {
           {/* Google sign up */}
           <button
             type="button"
+            onClick={handleGoogleAuth}
             className="w-full flex items-center justify-center space-x-3 bg-surface-container-low hover:bg-surface-container border border-outline-variant/30 rounded-xl py-3 px-4 transition-colors cursor-pointer"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none">
