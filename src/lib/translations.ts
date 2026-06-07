@@ -86,6 +86,7 @@ const t = {
     of: { en: 'of', hi: 'में से' },
     govSchemes: { en: 'government schemes. Data sourced from official government portals.', hi: 'सरकारी योजनाएं। सरकारी पोर्टल से डेटा।' },
     more: { en: 'more', hi: 'और' },
+    loadMore: { en: 'Load More Schemes', hi: 'और योजनाएं लोड करें' },
   },
 
   // ── Stocks Page ─────────────────────────────────────────────────────────
