@@ -22,6 +22,8 @@ const StockDetailPage = lazy(() => import('@/features/stocks/StockDetailPage'));
 const TaxCalculator = lazy(() => import('@/features/tools/TaxCalculator'));
 const BudgetAnalyzer = lazy(() => import('@/features/tools/BudgetAnalyzer'));
 const MonthlyReports = lazy(() => import('@/features/tools/MonthlyReports'));
+const AuthCallback = lazy(() => import('@/features/auth/AuthCallback'));
+// Legal Pages
 const PrivacyPolicy = lazy(() => import('@/features/legal/PrivacyPolicy'));
 const TermsConditions = lazy(() => import('@/features/legal/TermsConditions'));
 
@@ -73,6 +75,7 @@ function App() {
       <PageTransitionLoader>
         <Routes>
           <Route path="/" element={<LandingPage />} />
+          <Route path="/auth/callback" element={<AuthCallback />} />
           <Route element={<AuthLayout />}>
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignupPage />} />
