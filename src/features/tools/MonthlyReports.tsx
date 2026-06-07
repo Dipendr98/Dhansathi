@@ -3,12 +3,7 @@ import { motion } from 'framer-motion';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-interface MonthData {
-    income: number;
-    expenses: number;
-    investments: number;
-    portfolioValue: number;
-}
+import { useProToolsStore, type MonthData } from '@/stores/proToolsStore';
 
 function getLastNMonthKeys(n: number): string[] {
     const keys: string[] = [];
@@ -28,11 +23,15 @@ const fmt = (n: number) => '₹' + Math.round(n).toLocaleString('en-IN');
 
 export default function MonthlyReports() {
     const months = useMemo(() => getLastNMonthKeys(12), []);
-    const [data, setData] = useState<Record<string, MonthData>>(() => {
-        const init: Record<string, MonthData> = {};
-        months.forEach(k => { init[k] = blankMonth(); });
-        return init;
-    });
+    const storeData = useProToolsStore(s => s.monthlyData);
+    const updateField = useProToolsStore(s => s.setMonthlyDataField);
+
+    const data = useMemo(() => {
+        const res: Record<string, MonthData> = {};
+        months.forEach(k => { res[k] = storeData[k] || blankMonth(); });
+        return res;
+    }, [storeData, months]);
+
     const [selected, setSelected] = useState(months[months.length - 1]);
     const [editing, setEditing] = useState(false);
 
@@ -45,10 +44,6 @@ export default function MonthlyReports() {
     const returns = current.portfolioValue > 0 && prev?.portfolioValue
         ? (((current.portfolioValue - prev.portfolioValue) / prev.portfolioValue) * 100)
         : 0;
-
-    const updateField = (month: string, field: keyof MonthData, value: number) => {
-        setData(prev => ({ ...prev, [month]: { ...prev[month], [field]: value } }));
-    };
 
     const change = (curr: number, old: number | undefined) => {
         if (!old || old === 0) return null;

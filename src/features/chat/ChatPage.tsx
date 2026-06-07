@@ -5,9 +5,9 @@ import { loadSavedUserProfile, useAuthStore } from '@/stores/authStore';
 import { usePlanStore } from '@/stores/planStore';
 import { useLanguageStore } from '@/stores/languageStore';
 import { calculateSchemeMatches, calculateUnclaimedBenefits } from '@/lib/schemeService';
-import { fetchStockBySymbol, searchAndFetchStocks } from '@/lib/stockApi';
-import { MOCK_STOCKS } from '@/data/mockStocks';
+import { fetchLiveStocks, fetchStockBySymbol, searchAndFetchStocks } from '@/lib/stockApi';
 import type { StockData, UserProfile } from '@/types';
+import { useProToolsStore, type ProToolsState } from '@/stores/proToolsStore';
 
 // NVIDIA AI Configuration
 const DEV_NVIDIA_KEY = import.meta.env.DEV ? import.meta.env.VITE_NVIDIA_API_KEY || '' : '';
@@ -236,7 +236,7 @@ function buildStockMasterResponse(stock: StockData, user: UserProfile | null): s
   ].join('\n');
 }
 
-function getPersonalizedStockIdeas(user: UserProfile | null): StockData[] {
+function getPersonalizedStockIdeas(user: UserProfile | null, liveStocks: StockData[]): StockData[] {
   const income = user?.annual_income ?? 0;
   const occupation = (user?.occupation || '').toLowerCase();
   const beginnerOrConservative =
@@ -244,14 +244,14 @@ function getPersonalizedStockIdeas(user: UserProfile | null): StockData[] {
     ['student', 'homemaker', 'retired', 'daily_wage_worker'].includes(occupation);
 
   const pool = beginnerOrConservative
-    ? MOCK_STOCKS.filter((stock) =>
+    ? liveStocks.filter((stock) =>
       stock.pe_ratio > 0 &&
       stock.pe_ratio <= 30 &&
       stock.rsi_14 >= 35 &&
       stock.rsi_14 <= 65 &&
       ['buy', 'hold', 'strong_buy'].includes(stock.signal),
     )
-    : MOCK_STOCKS.filter((stock) => ['buy', 'strong_buy'].includes(stock.signal));
+    : liveStocks.filter((stock) => ['buy', 'strong_buy'].includes(stock.signal));
 
   return [...pool]
     .sort((a, b) => {
@@ -261,7 +261,7 @@ function getPersonalizedStockIdeas(user: UserProfile | null): StockData[] {
     .slice(0, 5);
 }
 
-function buildPersonalizationContext(user: UserProfile | null): string {
+function buildPersonalizationContext(user: UserProfile | null, liveStocks: StockData[]): string {
   if (!user) {
     return [
       'No saved user profile is available yet.',
@@ -290,7 +290,7 @@ function buildPersonalizationContext(user: UserProfile | null): string {
     return `${index + 1}. ${match.scheme.name} (${match.score}% match): ${match.scheme.benefits}. Why: ${reasons}${gaps ? `. Gaps: ${gaps}` : ''}`;
   });
 
-  const stockLines = getPersonalizedStockIdeas(user).map((stock, index) =>
+  const stockLines = getPersonalizedStockIdeas(user, liveStocks).map((stock, index) =>
     `${index + 1}. ${stock.symbol} (${stock.name}) - ${stock.signal.replace(/_/g, ' ')}, price ${formatINR(stock.price)}, RSI ${stock.rsi_14}, PE ${stock.pe_ratio}. Confirm live CMP and risk in Stocks/DhanMitra before trading.`,
   );
 
@@ -395,14 +395,22 @@ function TypingIndicator() {
 
 /* ── Component ─────────────────────────────────── */
 
-function buildSystemPrompt(user: UserProfile | null, isHindi: boolean = false, liveStockContext = ''): string {
+function buildSystemPrompt(user: UserProfile | null, isHindi: boolean = false, liveStockContext = '', liveStocks: StockData[] = [], proTools: ProToolsState | null = null): string {
   let prompt = `You are DhanSathi, a helpful financial assistant for users in India. You help with government scheme eligibility, stock analysis, SIP calculations, and personalized financial guidance.
 
 Use the saved profile and DhanSathi app context below whenever answering. If the user asks about schemes, recommend the strongest matches first, explain why they match, mention missing profile details if any, and suggest the next action. If the user asks about stocks or trades, use the live stock context first when available. Include CMP, change %, volume, delivery %, RSI, trend, signal, entry discipline, stop-loss thinking, position sizing, and avoid guaranteed-profit language. Always include a short reminder that stock ideas are educational and not financial advice.
 
-${buildPersonalizationContext(user)}
+${buildPersonalizationContext(user, liveStocks)}
 
 ${liveStockContext}`;
+
+  if (proTools) {
+    const totalIncome = proTools.budgetIncomes.reduce((a, b) => a + b.amount, 0);
+    const totalExp = proTools.budgetExpenses.reduce((a, b) => a + b.amount, 0);
+    const totalSav = proTools.budgetSavings.reduce((a, b) => a + b.amount, 0);
+    
+    prompt += `\n\nUser's Pro Tools Data:\n- Budget: Income ₹${totalIncome}, Expenses ₹${totalExp}, Savings ₹${totalSav}.\n- Tax Info: ${proTools.taxRegime} regime, ₹${proTools.taxIncome} gross income, ₹${proTools.taxSec80c} 80C deduction, ₹${proTools.taxSec80d} 80D deduction.\nUse this info to give customized responses.`;
+  }
 
   prompt += `\n\nYou are bilingual in Hindi and English. If the user writes in Hindi (Devanagari script or Hinglish), respond in Hindi. If they write in English, respond in English. Use simple, friendly language that a common Indian citizen can understand. Use ₹ for Indian currency.`;
 
@@ -457,6 +465,7 @@ export default function ChatPage() {
   const effectiveUser = user ?? loadSavedUserProfile();
   const planUseCredit = usePlanStore((s) => s.useCredit);
   const planRemaining = usePlanStore((s) => s.getRemainingCredits);
+  const proTools = useProToolsStore();
   const [messages, setMessages] = useState<ChatMessage[]>(INITIAL_MESSAGES);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -513,7 +522,9 @@ export default function ChatPage() {
 
     let askedStock: StockData | null = null;
     let liveStockContext = '';
+    let liveStocks: StockData[] = [];
     try {
+      liveStocks = await fetchLiveStocks();
       askedStock = await resolveAskedStock(messageText);
       liveStockContext = askedStock ? buildLiveStockContext(askedStock) : '';
     } catch (error) {
@@ -524,7 +535,7 @@ export default function ChatPage() {
       const aiResponse: ChatMessage = {
         id: nextMessageId(),
         role: 'ai',
-        content: `${includeNotice ? 'Live AI is unavailable right now, so I am using DhanSathi smart mode.\n\n' : ''}${getAIResponse(messageText, effectiveUser, askedStock)}`,
+        content: `${includeNotice ? 'Live AI is unavailable right now, so I am using DhanSathi smart mode.\n\n' : ''}${getAIResponse(messageText, effectiveUser, askedStock, liveStocks)}`,
         timestamp: new Date().toLocaleTimeString('en-US', {
           hour: 'numeric',
           minute: '2-digit',
@@ -545,7 +556,7 @@ export default function ChatPage() {
         }));
 
       const aiResult = await requestDhanSathiAI([
-          { role: "system", content: buildSystemPrompt(effectiveUser, isHindi, liveStockContext) },
+          { role: "system", content: buildSystemPrompt(effectiveUser, isHindi, liveStockContext, liveStocks, proTools) },
           ...chatHistory,
           { role: "user", content: liveStockContext ? `${messageText}\n\n${liveStockContext}` : messageText }
         ]);
@@ -557,7 +568,7 @@ export default function ChatPage() {
         {
           id: responseId,
           role: 'ai',
-          content: aiResult.content || getAIResponse(messageText, effectiveUser, askedStock),
+          content: aiResult.content || getAIResponse(messageText, effectiveUser, askedStock, liveStocks),
           reasoning: aiResult.reasoning,
           timestamp: new Date().toLocaleTimeString('en-US', {
             hour: 'numeric',
@@ -841,10 +852,10 @@ export default function ChatPage() {
 
 /* ── Mock AI Responses ─────────────────────────── */
 
-function getAIResponse(userInput: string, user: UserProfile | null, askedStock: StockData | null = null): string {
+function getAIResponse(userInput: string, user: UserProfile | null, askedStock: StockData | null = null, liveStocks: StockData[] = []): string {
   const input = userInput.toLowerCase();
   const matches = user ? calculateSchemeMatches(user).slice(0, 3) : [];
-  const stockIdeas = getPersonalizedStockIdeas(user).slice(0, 3);
+  const stockIdeas = getPersonalizedStockIdeas(user, liveStocks).slice(0, 3);
   const profileIntro = user
     ? `Using your saved profile (${user.state || 'state not set'}, ${humanize(user.occupation) || 'occupation not set'}, income ${user.annual_income != null ? formatINR(user.annual_income) : 'not set'}), `
     : '';

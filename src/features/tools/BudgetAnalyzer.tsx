@@ -1,36 +1,5 @@
-import { useState } from 'react';
 import { motion } from 'framer-motion';
-
-interface BudgetItem { label: string; amount: number; }
-
-const DEFAULT_INCOME: BudgetItem[] = [
-    { label: 'Salary', amount: 80000 },
-    { label: 'Freelance / Side Income', amount: 0 },
-    { label: 'Rental Income', amount: 0 },
-    { label: 'Dividends / Interest', amount: 0 },
-];
-
-const DEFAULT_EXPENSES: BudgetItem[] = [
-    { label: 'Rent / EMI', amount: 20000 },
-    { label: 'Groceries & Food', amount: 8000 },
-    { label: 'Utilities & Bills', amount: 3000 },
-    { label: 'Transport / Fuel', amount: 4000 },
-    { label: 'Insurance Premiums', amount: 2000 },
-    { label: 'Education / Courses', amount: 0 },
-    { label: 'Entertainment', amount: 3000 },
-    { label: 'Shopping / Personal', amount: 5000 },
-    { label: 'Medical / Health', amount: 1000 },
-    { label: 'Other Expenses', amount: 2000 },
-];
-
-const SAVINGS_TARGETS: BudgetItem[] = [
-    { label: 'Emergency Fund', amount: 5000 },
-    { label: 'SIP / Mutual Funds', amount: 10000 },
-    { label: 'PPF / NPS', amount: 5000 },
-    { label: 'Stocks / Trading', amount: 5000 },
-    { label: 'Fixed Deposits', amount: 0 },
-    { label: 'Gold / Other', amount: 0 },
-];
+import { useProToolsStore, type BudgetItem } from '@/stores/proToolsStore';
 
 function sum(items: BudgetItem[]) { return items.reduce((a, b) => a + b.amount, 0); }
 const fmt = (n: number) => '₹' + Math.round(n).toLocaleString('en-IN');
@@ -64,7 +33,7 @@ function Section({
             {items.map((item, i) => (
                 <div key={item.label} className="flex items-center gap-3">
                     <span className="text-xs text-on-surface-variant flex-1 min-w-0 truncate">{item.label}</span>
-                    <input type="number" value={item.amount} onChange={e => updateItem(i, +e.target.value)} className="w-28 px-2 py-1.5 rounded-lg border border-outline-variant/20 font-mono text-sm text-right" />
+                    <input type="number" value={item.amount || ''} onChange={e => updateItem(i, +e.target.value)} className="w-28 px-2 py-1.5 rounded-lg border border-outline-variant/20 font-mono text-sm text-right" />
                 </div>
             ))}
         </div>
@@ -72,9 +41,12 @@ function Section({
 }
 
 export default function BudgetAnalyzer() {
-    const [incomes, setIncomes] = useState<BudgetItem[]>(DEFAULT_INCOME);
-    const [expenses, setExpenses] = useState<BudgetItem[]>(DEFAULT_EXPENSES);
-    const [savings, setSavings] = useState<BudgetItem[]>(SAVINGS_TARGETS);
+    const incomes = useProToolsStore(s => s.budgetIncomes);
+    const expenses = useProToolsStore(s => s.budgetExpenses);
+    const savings = useProToolsStore(s => s.budgetSavings);
+    const setIncomes = useProToolsStore(s => s.setBudgetIncomes);
+    const setExpenses = useProToolsStore(s => s.setBudgetExpenses);
+    const setSavings = useProToolsStore(s => s.setBudgetSavings);
 
     const totalIncome = sum(incomes);
     const totalExpenses = sum(expenses);

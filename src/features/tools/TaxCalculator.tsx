@@ -1,7 +1,5 @@
-import { useState } from 'react';
 import { motion } from 'framer-motion';
-
-type Regime = 'old' | 'new';
+import { useProToolsStore, type Regime } from '@/stores/proToolsStore';
 
 const OLD_SLABS = [
     { min: 0, max: 250000, rate: 0 },
@@ -32,16 +30,27 @@ function calcTax(income: number, slabs: typeof OLD_SLABS, deductions: number) {
 }
 
 export default function TaxCalculator() {
-    const [regime, setRegime] = useState<Regime>('new');
-    const [income, setIncome] = useState(1200000);
-    const [hra, setHra] = useState(0);
-    const [sec80c, setSec80c] = useState(150000);
-    const [sec80d, setSec80d] = useState(25000);
-    const [nps, setNps] = useState(50000);
-    const [homeLoan, setHomeLoan] = useState(0);
-    const [otherDed, setOtherDed] = useState(0);
-    const [stcg, setStcg] = useState(0);
-    const [ltcg, setLtcg] = useState(0);
+    const s = useProToolsStore();
+    const regime = s.taxRegime;
+    const setRegime = (val: Regime) => s.setTaxData({ taxRegime: val });
+    const income = s.taxIncome;
+    const setIncome = (val: number) => s.setTaxData({ taxIncome: val });
+    const hra = s.taxHra;
+    const setHra = (val: number) => s.setTaxData({ taxHra: val });
+    const sec80c = s.taxSec80c;
+    const setSec80c = (val: number) => s.setTaxData({ taxSec80c: val });
+    const sec80d = s.taxSec80d;
+    const setSec80d = (val: number) => s.setTaxData({ taxSec80d: val });
+    const nps = s.taxNps;
+    const setNps = (val: number) => s.setTaxData({ taxNps: val });
+    const homeLoan = s.taxHomeLoan;
+    const setHomeLoan = (val: number) => s.setTaxData({ taxHomeLoan: val });
+    const otherDed = s.taxOtherDed;
+    const setOtherDed = (val: number) => s.setTaxData({ taxOtherDed: val });
+    const stcg = s.taxStcg;
+    const setStcg = (val: number) => s.setTaxData({ taxStcg: val });
+    const ltcg = s.taxLtcg;
+    const setLtcg = (val: number) => s.setTaxData({ taxLtcg: val });
 
     const oldDed = regime === 'old' ? sec80c + sec80d + nps + homeLoan + hra + otherDed : 75000; // new regime standard deduction
     const slabs = regime === 'old' ? OLD_SLABS : NEW_SLABS;
@@ -79,7 +88,7 @@ type TaxSummaryRow = { l: string; v: string; bold?: boolean };
                     <h3 className="font-bold text-lg">Income Details</h3>
                     <div>
                         <label className="text-sm font-medium text-on-surface-variant">Gross Annual Income</label>
-                        <input type="number" value={income} onChange={e => setIncome(+e.target.value)} className="w-full mt-1 px-4 py-3 rounded-xl border border-outline-variant/30 font-mono text-lg focus:ring-2 focus:ring-primary/30 focus:border-primary" />
+                        <input type="number" value={income || ''} onChange={e => setIncome(+e.target.value)} className="w-full mt-1 px-4 py-3 rounded-xl border border-outline-variant/30 font-mono text-lg focus:ring-2 focus:ring-primary/30 focus:border-primary" />
                     </div>
 
                     {regime === 'old' && (
@@ -95,7 +104,7 @@ type TaxSummaryRow = { l: string; v: string; bold?: boolean };
                             ].map(d => (
                                 <div key={d.label}>
                                     <label className="text-xs text-on-surface-variant">{d.label}</label>
-                                    <input type="number" value={d.val} onChange={e => d.set(+e.target.value)} className="w-full mt-0.5 px-3 py-2 rounded-lg border border-outline-variant/20 font-mono text-sm" />
+                                    <input type="number" value={d.val || ''} onChange={e => d.set(+e.target.value)} className="w-full mt-0.5 px-3 py-2 rounded-lg border border-outline-variant/20 font-mono text-sm" />
                                 </div>
                             ))}
                         </>
