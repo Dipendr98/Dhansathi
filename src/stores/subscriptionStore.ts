@@ -56,20 +56,20 @@ interface SubscriptionState {
 
 const DEFAULT_PLAN_FEATURES: Record<PlanType, PlanFeatures> = {
   free: {
-    schemeMatchLimit: 5,
-    stockFilters: 3,
-    stockAlerts: 3,
-    watchlistLimit: 0,
-    aiQueriesPerDay: 0,
-    simulationsPerMonth: 0,
-    showAds: true,
-    emailSupport: false,
-    prioritySupport: false,
+    schemeMatchLimit: 999,
+    stockFilters: 999,
+    stockAlerts: 999,
+    watchlistLimit: 999,
+    aiQueriesPerDay: 999,
+    simulationsPerMonth: 30,
+    showAds: false,
+    emailSupport: true,
+    prioritySupport: true,
     apiAccess: false,
-    taxCalculator: false,
-    budgetAnalyzer: false,
-    monthlyReport: false,
-    exportData: false,
+    taxCalculator: true,
+    budgetAnalyzer: true,
+    monthlyReport: true,
+    exportData: true,
   },
   pro: {
     schemeMatchLimit: 999,
@@ -93,7 +93,7 @@ const DEFAULT_PLAN_FEATURES: Record<PlanType, PlanFeatures> = {
 
 const DEFAULT_PLAN_PRICES = {
   free: { monthly: 0, yearly: 0 },
-  pro: { monthly: 199, yearly: 1999 },
+  pro: { monthly: 0, yearly: 0 },
 };
 
 // ── Default plan configs (for admin editing) ────────────────────────────────
@@ -106,11 +106,18 @@ const DEFAULT_PLAN_CONFIGS: PlanConfig[] = [
     monthlyPrice: 0,
     yearlyPrice: 0,
     displayFeatures: [
-      { text: '5 scheme matches/month', enabled: true },
-      { text: '3 stock filters', enabled: true },
-      { text: '3 stock alerts', enabled: true },
-      { text: 'Basic dashboard', enabled: true },
-      { text: 'Community support', enabled: true },
+      { text: 'Unlimited scheme matches', enabled: true },
+      { text: 'All stock filters & screeners', enabled: true },
+      { text: 'Unlimited stock alerts', enabled: true },
+      { text: 'Unlimited watchlist', enabled: true },
+      { text: 'Unlimited AI queries/day', enabled: true },
+      { text: '30 simulations/month', enabled: true },
+      { text: 'Tax Calculator', enabled: true },
+      { text: 'Budget Analyzer', enabled: true },
+      { text: 'Monthly Reports', enabled: true },
+      { text: 'Export data & reports', enabled: true },
+      { text: 'Priority support', enabled: true },
+      { text: 'No ads', enabled: true },
     ],
     features: DEFAULT_PLAN_FEATURES.free,
   },
@@ -118,8 +125,8 @@ const DEFAULT_PLAN_CONFIGS: PlanConfig[] = [
     id: 'pro',
     name: 'Pro',
     tagline: 'Everything you need for smart investing',
-    monthlyPrice: 199,
-    yearlyPrice: 1999,
+    monthlyPrice: 0,
+    yearlyPrice: 0,
     displayFeatures: [
       { text: 'Unlimited scheme matches', enabled: true },
       { text: 'All stock filters & screeners', enabled: true },
@@ -147,7 +154,24 @@ const PLAN_CONFIGS_STORAGE_KEY = 'dhansathi_plan_configs';
 export function getPlanConfigs(): PlanConfig[] {
   try {
     const stored = localStorage.getItem(PLAN_CONFIGS_STORAGE_KEY);
-    if (stored) return JSON.parse(stored);
+    if (stored) {
+      const parsed = JSON.parse(stored) as PlanConfig[];
+      return parsed.map((config) => {
+        if (config.id === 'free') {
+          return {
+            ...DEFAULT_PLAN_CONFIGS[0],
+            name: config.name || DEFAULT_PLAN_CONFIGS[0].name,
+            tagline: config.tagline || DEFAULT_PLAN_CONFIGS[0].tagline,
+          };
+        }
+
+        return {
+          ...config,
+          monthlyPrice: 0,
+          yearlyPrice: 0,
+        };
+      });
+    }
   } catch { /* ignore */ }
   return DEFAULT_PLAN_CONFIGS;
 }
@@ -160,7 +184,7 @@ export function getPlanPrices(): Record<PlanType, { monthly: number; yearly: num
   const configs = getPlanConfigs();
   const prices: Record<string, { monthly: number; yearly: number }> = {};
   for (const c of configs) {
-    prices[c.id] = { monthly: c.monthlyPrice, yearly: c.yearlyPrice };
+    prices[c.id] = { monthly: 0, yearly: 0 };
   }
   return prices as Record<PlanType, { monthly: number; yearly: number }>;
 }
@@ -169,7 +193,7 @@ export function getPlanFeatures(): Record<PlanType, PlanFeatures> {
   const configs = getPlanConfigs();
   const features: Record<string, PlanFeatures> = {};
   for (const c of configs) {
-    features[c.id] = c.features;
+    features[c.id] = c.id === 'free' ? DEFAULT_PLAN_FEATURES.free : { ...DEFAULT_PLAN_FEATURES.pro, ...c.features };
   }
   return features as Record<PlanType, PlanFeatures>;
 }

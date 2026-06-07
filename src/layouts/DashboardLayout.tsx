@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
-import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { useState, useRef, useEffect } from 'react';
+import { Outlet, NavLink, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useLanguageStore } from '@/stores/languageStore';
 import { useAuthStore } from '@/stores/authStore';
@@ -11,7 +11,6 @@ interface NavItem {
   path: string;
   badge?: string;
   sectionKey: 'main' | 'aiTools' | 'proTools' | 'more';
-  proFeature?: 'taxCalculator' | 'budgetAnalyzer' | 'monthlyReport';
 }
 
 const NAV_ITEMS: NavItem[] = [
@@ -22,20 +21,17 @@ const NAV_ITEMS: NavItem[] = [
   { labelKey: 'alerts', icon: 'notifications', path: '/dashboard/alerts', badge: '3', sectionKey: 'main' },
   { labelKey: 'dhanMitra', icon: 'psychology', path: '/dashboard/simulator', sectionKey: 'aiTools' },
   { labelKey: 'askDhanSathi', icon: 'chat_bubble', path: '/dashboard/chat', sectionKey: 'aiTools' },
-  { labelKey: 'taxCalculator', icon: 'calculate', path: '/dashboard/tax-calculator', sectionKey: 'proTools', proFeature: 'taxCalculator' },
-  { labelKey: 'budgetAnalyzer', icon: 'account_balance_wallet', path: '/dashboard/budget-analyzer', sectionKey: 'proTools', proFeature: 'budgetAnalyzer' },
-  { labelKey: 'monthlyReports', icon: 'assessment', path: '/dashboard/monthly-reports', sectionKey: 'proTools', proFeature: 'monthlyReport' },
+  { labelKey: 'taxCalculator', icon: 'calculate', path: '/dashboard/tax-calculator', sectionKey: 'proTools' },
+  { labelKey: 'budgetAnalyzer', icon: 'account_balance_wallet', path: '/dashboard/budget-analyzer', sectionKey: 'proTools' },
+  { labelKey: 'monthlyReports', icon: 'assessment', path: '/dashboard/monthly-reports', sectionKey: 'proTools' },
   { labelKey: 'support', icon: 'support_agent', path: '/dashboard/support', sectionKey: 'more' },
 ];
 
 export default function DashboardLayout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
-  const navigate = useNavigate();
   const { lang, toggleLang } = useLanguageStore();
   const user = useAuthStore((s) => s.user);
-  const userPlan = user?.plan || 'free';
-  const isPro = userPlan === 'pro';
 
   const navRef = useRef<HTMLElement>(null);
   const [sliderStyle, setSliderStyle] = useState({ top: 0, height: 0 });
@@ -45,7 +41,7 @@ export default function DashboardLayout() {
     return location.pathname.startsWith(path);
   };
 
-  const updateSlider = useCallback(() => {
+  useEffect(() => {
     if (!navRef.current) return;
     const activeLink = navRef.current.querySelector<HTMLElement>(
       NAV_ITEMS.map((item) =>
@@ -63,10 +59,6 @@ export default function DashboardLayout() {
       });
     }
   }, [location.pathname]);
-
-  useEffect(() => {
-    updateSlider();
-  }, [updateSlider]);
 
   // Group nav items by section
   const sections = NAV_ITEMS.reduce<Record<string, NavItem[]>>((acc, item) => {
@@ -113,35 +105,24 @@ export default function DashboardLayout() {
                 </p>
                 <div className="space-y-0.5">
                   {items.map((item) => {
-                    const isLocked = item.proFeature && !isPro;
                     return (
                       <NavLink
                         key={item.path}
-                        to={isLocked ? '/dashboard/pricing' : item.path}
+                        to={item.path}
                         end={item.path === '/dashboard'}
                         data-nav-path={item.path}
-                        onClick={(e) => {
-                          if (isLocked) {
-                            e.preventDefault();
-                            navigate('/dashboard/pricing');
-                          }
-                        }}
                         className={cn(
                           'relative z-10 flex items-center justify-between px-3 py-2 rounded-xl transition-all',
-                          isLocked
-                            ? 'text-white/30 cursor-pointer hover:bg-white/5'
-                            : isActive(item.path)
-                              ? 'text-white font-semibold'
-                              : 'text-sky-100/70 hover:bg-white/5',
+                          isActive(item.path)
+                            ? 'text-white font-semibold'
+                            : 'text-sky-100/70 hover:bg-white/5',
                         )}
                       >
                         <div className="flex items-center space-x-3">
-                          <span className={cn('material-symbols-outlined text-[20px]', isLocked && 'opacity-40')}>{item.icon}</span>
-                          <span className={cn('text-sm', isLocked && 'opacity-40')}>{T('nav', item.labelKey, lang)}</span>
+                          <span className="material-symbols-outlined text-[20px]">{item.icon}</span>
+                          <span className="text-sm">{T('nav', item.labelKey, lang)}</span>
                         </div>
-                        {isLocked ? (
-                          <span className="material-symbols-outlined text-[14px] text-saffron">lock</span>
-                        ) : item.badge ? (
+                        {item.badge ? (
                           <span
                             className={cn(
                               'text-white text-[10px] font-bold px-1.5 py-0.5 rounded-md',
@@ -196,8 +177,8 @@ export default function DashboardLayout() {
               </div>
               <div className="overflow-hidden">
                 <p className="text-white font-bold text-sm truncate">{user?.full_name || user?.email?.split('@')[0] || 'User'}</p>
-                <p className={cn('text-[10px] font-extrabold uppercase tracking-wider', userPlan === 'pro' ? 'text-saffron' : 'text-white/50')}>
-                  {userPlan === 'pro' ? 'Pro Plan' : 'Free Plan'}
+                <p className="text-[10px] font-extrabold uppercase tracking-wider text-white/50">
+                  Full Access
                 </p>
               </div>
             </div>
@@ -229,33 +210,25 @@ export default function DashboardLayout() {
             onClick={(e) => e.stopPropagation()}
           >
             {NAV_ITEMS.map((item) => {
-              const isLocked = item.proFeature && !isPro;
               return (
                 <NavLink
                   key={item.path}
-                  to={isLocked ? '/dashboard/pricing' : item.path}
+                  to={item.path}
                   end={item.path === '/dashboard'}
-                  onClick={(e) => {
-                    if (isLocked) {
-                      e.preventDefault();
-                      navigate('/dashboard/pricing');
-                    }
+                  onClick={() => {
                     setMobileMenuOpen(false);
                   }}
                   className={cn(
                     'flex items-center justify-between px-4 py-3 rounded-xl transition-all',
-                    isLocked
-                      ? 'text-on-surface-variant/40'
-                      : isActive(item.path)
-                        ? 'bg-primary-fixed text-primary font-semibold'
-                        : 'text-on-surface-variant hover:bg-surface-container-low',
+                    isActive(item.path)
+                      ? 'bg-primary-fixed text-primary font-semibold'
+                      : 'text-on-surface-variant hover:bg-surface-container-low',
                   )}
                 >
                   <div className="flex items-center space-x-3">
-                    <span className={cn('material-symbols-outlined text-[20px]', isLocked && 'opacity-40')}>{item.icon}</span>
-                    <span className={cn('text-sm', isLocked && 'opacity-40')}>{T('nav', item.labelKey, lang)}</span>
+                    <span className="material-symbols-outlined text-[20px]">{item.icon}</span>
+                    <span className="text-sm">{T('nav', item.labelKey, lang)}</span>
                   </div>
-                  {isLocked && <span className="material-symbols-outlined text-[14px] text-saffron">lock</span>}
                 </NavLink>
               );
             })}

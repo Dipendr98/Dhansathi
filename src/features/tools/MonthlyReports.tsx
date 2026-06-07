@@ -1,7 +1,5 @@
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { useAuthStore } from '@/stores/authStore';
-import { useNavigate } from 'react-router-dom';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -29,21 +27,6 @@ function blankMonth(): MonthData {
 const fmt = (n: number) => '₹' + Math.round(n).toLocaleString('en-IN');
 
 export default function MonthlyReports() {
-    const user = useAuthStore((s) => s.user);
-    const nav = useNavigate();
-    const isPro = user?.plan === 'pro';
-
-    if (!isPro) {
-        return (
-            <div className="flex flex-col items-center justify-center min-h-[400px] text-center space-y-4">
-                <span className="material-symbols-outlined text-6xl text-primary/30">lock</span>
-                <h2 className="text-xl font-bold">Pro Feature</h2>
-                <p className="text-on-surface-variant max-w-md">Monthly Reports is available on the Pro plan.</p>
-                <button onClick={() => nav('/dashboard/pricing')} className="px-6 py-3 bg-primary text-white rounded-xl font-bold">Upgrade to Pro</button>
-            </div>
-        );
-    }
-
     const months = useMemo(() => getLastNMonthKeys(12), []);
     const [data, setData] = useState<Record<string, MonthData>>(() => {
         const init: Record<string, MonthData> = {};

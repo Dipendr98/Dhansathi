@@ -280,7 +280,6 @@ function buildPersonalizationContext(user: UserProfile | null): string {
     `Occupation: ${humanize(user.occupation) || 'Not provided'}`,
     `Annual income: ${user.annual_income != null ? formatINR(user.annual_income) : 'Not provided'}`,
     `BPL: ${user.is_bpl ? 'Yes' : 'No'}`,
-    `Plan: ${user.plan}`,
   ];
 
   const matches = calculateSchemeMatches(user).slice(0, 5);
@@ -458,8 +457,6 @@ export default function ChatPage() {
   const effectiveUser = user ?? loadSavedUserProfile();
   const planUseCredit = usePlanStore((s) => s.useCredit);
   const planRemaining = usePlanStore((s) => s.getRemainingCredits);
-  const planUpgrade = usePlanStore((s) => s.upgradeToPro);
-  const userPlan = user?.plan || 'free';
   const [messages, setMessages] = useState<ChatMessage[]>(INITIAL_MESSAGES);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -491,9 +488,7 @@ export default function ChatPage() {
       const noCreditsMsg: ChatMessage = {
         id: nextMessageId(),
         role: 'ai',
-        content: userPlan === 'free'
-          ? 'You have used all your free AI credits for today. Upgrade to Pro (₹199/month) for unlimited credits!'
-          : 'You have used all your AI credits for today. Credits reset tomorrow.',
+        content: 'AI credits are unavailable right now. Please try again tomorrow.',
         timestamp: new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }),
       };
       setMessages((prev) => [...prev, noCreditsMsg]);
@@ -800,23 +795,14 @@ export default function ChatPage() {
           <div className="flex items-center space-x-1.5 text-xs text-on-surface-variant">
             <span className="material-symbols-outlined text-[14px] text-saffron">token</span>
             <span>
-              {userPlan === 'pro' ? <span className="font-mono font-semibold">Unlimited</span> : <><span className="font-mono font-semibold">{planRemaining('ai_chat')}</span>/20</>} credits today
+              {Number.isFinite(planRemaining('ai_chat')) ? (
+                <><span className="font-mono font-semibold">{planRemaining('ai_chat')}</span> credits today</>
+              ) : (
+                <><span className="font-mono font-semibold">Unlimited</span> credits today</>
+              )}
             </span>
-            {userPlan === 'free' && (
-              <span className="text-[10px] font-bold text-primary bg-primary-fixed/40 px-1.5 py-0.5 rounded">FREE</span>
-            )}
-            {userPlan === 'pro' && (
-              <span className="text-[10px] font-bold text-white bg-primary px-1.5 py-0.5 rounded">PRO</span>
-            )}
+            <span className="text-[10px] font-bold text-primary bg-primary-fixed/40 px-1.5 py-0.5 rounded">FULL ACCESS</span>
           </div>
-          {userPlan === 'free' && planRemaining('ai_chat') === 0 && (
-            <button
-              onClick={planUpgrade}
-              className="text-[11px] font-bold text-primary hover:underline"
-            >
-              Upgrade to Pro — ₹199/mo
-            </button>
-          )}
         </div>
       </motion.div>
       <motion.div

@@ -62,7 +62,6 @@ export default function PrivacyPolicy() {
                                 <li>Government scheme eligibility data</li>
                                 <li>Stock watchlist preferences</li>
                                 <li>Simulation and trading history within the platform</li>
-                                <li>Subscription and payment information (processed securely via Razorpay)</li>
                             </ul>
 
                             <h3 className="text-lg font-semibold text-on-surface mt-4 mb-2">2.3 Usage Data</h3>
@@ -81,7 +80,6 @@ export default function PrivacyPolicy() {
                                 <li>To deliver real-time stock market data and analysis</li>
                                 <li>To power AI-driven financial advisory (DhanMitra & Ask DhanSathi)</li>
                                 <li>To run stock market simulations and SIP projections</li>
-                                <li>To process payments and manage subscriptions</li>
                                 <li>To send alerts and notifications about schemes and stocks</li>
                                 <li>To improve our services through analytics</li>
                                 <li>To comply with legal obligations under Indian law</li>
@@ -96,7 +94,6 @@ export default function PrivacyPolicy() {
                             <ul className="list-disc pl-6 space-y-1">
                                 <li>End-to-end encryption for data transmission (TLS/SSL)</li>
                                 <li>Secure authentication via Supabase with Row Level Security (RLS)</li>
-                                <li>Payment processing through PCI-DSS compliant Razorpay</li>
                                 <li>Regular security audits and vulnerability assessments</li>
                                 <li>Data stored on secure cloud infrastructure within India</li>
                             </ul>
@@ -106,7 +103,7 @@ export default function PrivacyPolicy() {
                             <h2 className="text-xl font-bold text-on-surface mt-8 mb-3">5. Data Sharing</h2>
                             <p>We do NOT sell your personal data. We may share information with:</p>
                             <ul className="list-disc pl-6 space-y-1">
-                                <li><strong>Service Providers:</strong> Supabase (database), Razorpay (payments), Yahoo Finance API (stock data)</li>
+                                <li><strong>Service Providers:</strong> Supabase (database), Yahoo Finance API (stock data)</li>
                                 <li><strong>Legal Requirements:</strong> When required by Indian law, court order, or government authority</li>
                                 <li><strong>Business Transfers:</strong> In case of merger, acquisition, or asset sale</li>
                             </ul>

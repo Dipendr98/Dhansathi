@@ -7,7 +7,6 @@ import { INDIAN_STATES } from '@/lib/constants';
 import type { UserProfile } from '@/types';
 import { useLanguageStore } from '@/stores/languageStore';
 import { T } from '@/lib/translations';
-import { usePayment } from '@/hooks/usePayment';
 
 /* ── Animation helpers ─────────────────────────── */
 
@@ -32,7 +31,7 @@ const expandVariant = {
 
 /* ── Types & data ──────────────────────────────── */
 
-type ActiveSection = 'profile' | 'billing' | 'notifications' | 'security' | null;
+type ActiveSection = 'profile' | 'notifications' | 'security' | null;
 
 interface SettingsCard {
   key: ActiveSection;
@@ -57,16 +56,6 @@ const ACCOUNT_CARDS: SettingsCard[] = [
     borderActive: 'border-primary',
   },
   {
-    key: 'billing',
-    icon: 'credit_card',
-    title: 'Billing',
-    description: 'Manage payment methods, view invoices, and billing history',
-    action: 'Manage Billing',
-    color: 'text-secondary',
-    iconBg: 'bg-secondary-fixed',
-    borderActive: 'border-secondary',
-  },
-  {
     key: 'notifications',
     icon: 'notifications',
     title: 'Notifications',
@@ -88,19 +77,17 @@ const ACCOUNT_CARDS: SettingsCard[] = [
   },
 ];
 
-interface PlanFeature {
-  name: string;
-  free: boolean | string;
-  pro: boolean | string;
-}
-
-const PLAN_FEATURES: PlanFeature[] = [
-  { name: 'Scheme Eligibility', free: 'Basic', pro: 'Unlimited' },
-  { name: 'Stock Screener', free: '5/day', pro: 'Unlimited' },
-  { name: 'Crossover Alerts', free: false, pro: true },
-  { name: 'DhanMitra AI Chat', free: '3/month', pro: 'Unlimited' },
-  { name: 'AI Simulator', free: '3/month', pro: 'Unlimited' },
-  { name: 'Priority Support', free: false, pro: true },
+const FULL_ACCESS_FEATURES = [
+  'Unlimited scheme matches',
+  'All stock filters and screeners',
+  'Unlimited stock alerts',
+  'DhanMitra AI chat',
+  'AI simulator',
+  'Tax calculator',
+  'Budget analyzer',
+  'Monthly reports',
+  'Export data and reports',
+  'Priority support',
 ];
 
 const OCCUPATIONS = [
@@ -159,7 +146,6 @@ export default function SettingsPage() {
   const setUser = useAuthStore((s) => s.setUser);
   const signOut = useAuthStore((s) => s.signOut);
   const navigate = useNavigate();
-  const { handleUpgrade, loading: paymentLoading } = usePayment();
 
   const [activeSection, setActiveSection] = useState<ActiveSection>(null);
   const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
@@ -277,7 +263,6 @@ export default function SettingsPage() {
   const userName = user?.full_name || user?.email?.split('@')[0] || 'User';
   const userInitial = userName.charAt(0).toUpperCase();
   const userEmail = user?.email || 'user@example.com';
-  const userPlan = user?.plan || 'free';
 
   return (
     <motion.div
@@ -346,13 +331,8 @@ export default function SettingsPage() {
           <div className="flex-1">
             <div className="flex items-center space-x-3">
               <h2 className="font-headline text-xl font-bold text-on-surface">{userName}</h2>
-              <span className={cn(
-                'text-[10px] font-extrabold uppercase tracking-wider px-3 py-1 rounded-full',
-                userPlan === 'pro'
-                  ? 'bg-gradient-to-r from-primary to-primary-container text-white'
-                  : 'bg-surface-container-high text-on-surface-variant',
-              )}>
-                {userPlan === 'pro' ? 'Pro Plan' : 'Free Plan'}
+              <span className="text-[10px] font-extrabold uppercase tracking-wider px-3 py-1 rounded-full bg-primary-fixed text-primary">
+                Full Access
               </span>
             </div>
             <p className="text-sm text-on-surface-variant mt-1">{userEmail}</p>
@@ -401,7 +381,7 @@ export default function SettingsPage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
-                    <h4 className="font-semibold text-on-surface">{card.key === 'profile' ? T('settings', 'profileTitle', lang) : card.key === 'billing' ? T('settings', 'billingTitle', lang) : card.key === 'notifications' ? T('settings', 'notifTitle', lang) : T('settings', 'securityTitle', lang)}</h4>
+                    <h4 className="font-semibold text-on-surface">{card.key === 'profile' ? T('settings', 'profileTitle', lang) : card.key === 'notifications' ? T('settings', 'notifTitle', lang) : T('settings', 'securityTitle', lang)}</h4>
                     <span className={cn(
                       'material-symbols-outlined text-lg text-on-surface-variant transition-transform duration-300',
                       activeSection === card.key && 'rotate-180',
@@ -410,7 +390,7 @@ export default function SettingsPage() {
                     </span>
                   </div>
                   <p className="text-xs text-on-surface-variant mt-1 leading-relaxed">
-                    {card.key === 'profile' ? T('settings', 'profileDesc', lang) : card.key === 'billing' ? T('settings', 'billingDesc', lang) : card.key === 'notifications' ? T('settings', 'notifDesc', lang) : T('settings', 'securityDesc', lang)}
+                    {card.key === 'profile' ? T('settings', 'profileDesc', lang) : card.key === 'notifications' ? T('settings', 'notifDesc', lang) : T('settings', 'securityDesc', lang)}
                   </p>
                   <span
                     className={cn(
@@ -418,7 +398,7 @@ export default function SettingsPage() {
                       card.color,
                     )}
                   >
-                    <span>{card.key === 'profile' ? T('settings', 'editProfile', lang) : card.key === 'billing' ? T('settings', 'managePlan', lang) : card.key === 'notifications' ? T('settings', 'notifAction', lang) : T('settings', 'securityAction', lang)}</span>
+                    <span>{card.key === 'profile' ? T('settings', 'editProfile', lang) : card.key === 'notifications' ? T('settings', 'notifAction', lang) : T('settings', 'securityAction', lang)}</span>
                     <span className="material-symbols-outlined text-[14px] group-hover:translate-x-1 transition-transform">
                       arrow_forward
                     </span>
@@ -652,122 +632,6 @@ export default function SettingsPage() {
               </p>
             </motion.div>
           )}
-
-          {/* ── BILLING SECTION ── */}
-          {activeSection === 'billing' && (
-            <motion.div
-              key="billing"
-              variants={expandVariant}
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-              className="bg-surface-container-lowest rounded-2xl border border-secondary/30 p-6 md:p-8 overflow-hidden"
-            >
-              <div className="flex items-center gap-2 mb-6">
-                <span className="material-symbols-outlined text-secondary text-xl">credit_card</span>
-                <h4 className="font-headline font-bold text-on-surface text-lg">Billing & Subscription</h4>
-              </div>
-
-              {/* Current Plan */}
-              <div className="bg-surface-container-low rounded-xl p-5 mb-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">Current Plan</p>
-                    <p className="font-headline font-bold text-on-surface text-xl mt-1">
-                      {userPlan === 'pro' ? 'Pro' : 'Free'} Plan
-                    </p>
-                    <p className="text-sm text-on-surface-variant mt-1">
-                      {userPlan === 'free'
-                        ? 'Basic access to schemes and stocks'
-                        : 'Full access to all features'}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-mono text-2xl font-extrabold text-on-surface">
-                      {userPlan === 'free' ? 'Free' : '₹199'}
-                    </p>
-                    {userPlan !== 'free' && (
-                      <p className="text-xs text-on-surface-variant">/month</p>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Payment Method */}
-              <div className="mb-6">
-                <p className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-3">Payment Method</p>
-                <div className="flex items-center gap-4 p-4 rounded-xl bg-surface-container-low">
-                  <div className="w-10 h-10 rounded-xl bg-surface-container flex items-center justify-center">
-                    <span className="material-symbols-outlined text-on-surface-variant">account_balance</span>
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold text-on-surface">
-                      {userPlan === 'free' ? 'No payment method' : 'UPI / Razorpay'}
-                    </p>
-                    <p className="text-xs text-on-surface-variant">
-                      {userPlan === 'free' ? 'Add a payment method to upgrade' : 'Linked to your account'}
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => navigate('/dashboard/pricing')}
-                    className="text-xs font-semibold text-primary hover:underline"
-                  >
-                    {userPlan === 'free' ? 'Add' : 'Change'}
-                  </button>
-                </div>
-              </div>
-
-              {/* Recent Invoices */}
-              <div>
-                <p className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-3">Recent Invoices</p>
-                {userPlan === 'free' ? (
-                  <p className="text-sm text-on-surface-variant py-4 text-center">No invoices yet. Upgrade to Pro to get started.</p>
-                ) : (
-                  <div className="space-y-2">
-                    {[
-                      { date: 'Mar 2026', amount: '₹199', status: 'Paid' },
-                      { date: 'Feb 2026', amount: '₹199', status: 'Paid' },
-                      { date: 'Jan 2026', amount: '₹199', status: 'Paid' },
-                    ].map((inv) => (
-                      <div key={inv.date} className="flex items-center justify-between p-3 rounded-lg bg-surface-container-low">
-                        <div className="flex items-center gap-3">
-                          <span className="material-symbols-outlined text-on-surface-variant text-lg">receipt</span>
-                          <span className="text-sm text-on-surface font-medium">{inv.date}</span>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <span className="font-mono text-sm font-bold text-on-surface">{inv.amount}</span>
-                          <span className="text-[10px] font-bold uppercase bg-india-green/10 text-india-green px-2 py-0.5 rounded-md">
-                            {inv.status}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {userPlan === 'free' && (
-                <button
-                  onClick={() => handleUpgrade('pro', false)}
-                  disabled={paymentLoading}
-                  className={cn(
-                    "mt-6 w-full bg-gradient-to-r from-primary to-primary-container text-white font-bold text-sm px-6 py-3 rounded-xl hover:shadow-lg hover:shadow-primary/20 transition-all",
-                    paymentLoading && "opacity-50 cursor-wait"
-                  )}
-                >
-                  {paymentLoading ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      Processing...
-                    </span>
-                  ) : (
-                    'Upgrade to Pro - ₹199/month'
-                  )}
-                </button>
-              )}
-            </motion.div>
-          )}
-
           {/* ── NOTIFICATIONS SECTION ── */}
           {activeSection === 'notifications' && (
             <motion.div
@@ -952,7 +816,7 @@ export default function SettingsPage() {
         </div>
       </motion.div>
 
-      {/* ── Current Plan ── */}
+      {/* ── Access Summary ── */}
       <motion.div
         variants={fadeUp}
         custom={3}
@@ -963,95 +827,30 @@ export default function SettingsPage() {
             <div>
               <div className="flex items-center space-x-3">
                 <span className="material-symbols-outlined text-primary text-[24px]">
-                  workspace_premium
+                  verified
                 </span>
-                <h3 className="font-headline font-bold text-on-surface text-lg">Current Plan</h3>
+                <h3 className="font-headline font-bold text-on-surface text-lg">Full Access</h3>
               </div>
               <div className="mt-3 flex items-baseline space-x-2">
                 <span className="font-mono text-3xl font-extrabold text-on-surface">
-                  {userPlan === 'free' ? 'Free' : '₹199'}
+                  Free
                 </span>
-                {userPlan !== 'free' && (
-                  <span className="text-on-surface-variant text-sm">/month</span>
-                )}
               </div>
               <p className="text-xs text-on-surface-variant mt-1">
-                {userPlan !== 'free' ? 'Next billing date: April 15, 2026' : 'Upgrade anytime to unlock all features'}
+                Every DhanSathi feature is available without a paid plan.
               </p>
             </div>
-            {userPlan === 'free' && (
-              <button
-                onClick={() => navigate('/dashboard/pricing')}
-                className="bg-gradient-to-r from-primary to-primary-container text-white font-bold text-sm px-6 py-3 rounded-xl hover:shadow-lg hover:shadow-primary/20 transition-all"
-              >
-                Upgrade to Pro
-              </button>
-            )}
           </div>
         </div>
 
-        {/* Plan comparison */}
         <div className="border-t border-outline-variant/20">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="bg-surface-container-low">
-                  <th className="text-left px-6 py-3 font-semibold text-on-surface-variant text-xs uppercase tracking-wider">
-                    Feature
-                  </th>
-                  <th className="text-center px-6 py-3 font-semibold text-on-surface-variant text-xs uppercase tracking-wider">
-                    Free
-                  </th>
-                  <th className="text-center px-6 py-3 font-semibold text-xs uppercase tracking-wider text-primary">
-                    Pro {userPlan === 'pro' && '(Current)'}
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {PLAN_FEATURES.map((feature) => (
-                  <tr
-                    key={feature.name}
-                    className="border-t border-outline-variant/10"
-                  >
-                    <td className="px-6 py-3 text-on-surface font-medium">{feature.name}</td>
-                    <td className="px-6 py-3 text-center">
-                      {typeof feature.free === 'boolean' ? (
-                        feature.free ? (
-                          <span className="material-symbols-outlined text-tertiary text-[18px]">
-                            check_circle
-                          </span>
-                        ) : (
-                          <span className="material-symbols-outlined text-outline text-[18px]">
-                            cancel
-                          </span>
-                        )
-                      ) : (
-                        <span className="text-on-surface-variant font-mono text-xs">
-                          {feature.free}
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-6 py-3 text-center">
-                      {typeof feature.pro === 'boolean' ? (
-                        feature.pro ? (
-                          <span className="material-symbols-outlined text-tertiary text-[18px]">
-                            check_circle
-                          </span>
-                        ) : (
-                          <span className="material-symbols-outlined text-outline text-[18px]">
-                            cancel
-                          </span>
-                        )
-                      ) : (
-                        <span className="text-primary font-mono text-xs font-semibold">
-                          {feature.pro}
-                        </span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-6">
+            {FULL_ACCESS_FEATURES.map((feature) => (
+              <div key={feature} className="flex items-center gap-2 text-sm text-on-surface">
+                <span className="material-symbols-outlined text-tertiary text-[18px]">check_circle</span>
+                <span>{feature}</span>
+              </div>
+            ))}
           </div>
         </div>
       </motion.div>

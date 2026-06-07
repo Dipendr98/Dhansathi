@@ -1,7 +1,5 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { useAuthStore } from '@/stores/authStore';
-import { useNavigate } from 'react-router-dom';
 
 interface BudgetItem { label: string; amount: number; }
 
@@ -37,22 +35,43 @@ const SAVINGS_TARGETS: BudgetItem[] = [
 function sum(items: BudgetItem[]) { return items.reduce((a, b) => a + b.amount, 0); }
 const fmt = (n: number) => '₹' + Math.round(n).toLocaleString('en-IN');
 
-export default function BudgetAnalyzer() {
-    const user = useAuthStore((s) => s.user);
-    const nav = useNavigate();
-    const isPro = user?.plan === 'pro';
+function Section({
+    title,
+    icon,
+    items,
+    setItems,
+    color,
+}: {
+    title: string;
+    icon: string;
+    items: BudgetItem[];
+    setItems: (v: BudgetItem[]) => void;
+    color: string;
+}) {
+    const updateItem = (idx: number, amount: number) => {
+        const copy = [...items];
+        copy[idx] = { ...copy[idx], amount };
+        setItems(copy);
+    };
 
-    if (!isPro) {
-        return (
-            <div className="flex flex-col items-center justify-center min-h-[400px] text-center space-y-4">
-                <span className="material-symbols-outlined text-6xl text-primary/30">lock</span>
-                <h2 className="text-xl font-bold">Pro Feature</h2>
-                <p className="text-on-surface-variant max-w-md">Budget Analyzer is available on the Pro plan.</p>
-                <button onClick={() => nav('/dashboard/pricing')} className="px-6 py-3 bg-primary text-white rounded-xl font-bold">Upgrade to Pro</button>
+    return (
+        <div className="bg-white rounded-2xl shadow-lg border border-outline-variant/20 p-5 space-y-3">
+            <div className="flex items-center gap-2">
+                <span className={`material-symbols-outlined ${color}`}>{icon}</span>
+                <h3 className="font-bold">{title}</h3>
+                <span className="ml-auto font-mono font-bold text-sm">{fmt(sum(items))}</span>
             </div>
-        );
-    }
+            {items.map((item, i) => (
+                <div key={item.label} className="flex items-center gap-3">
+                    <span className="text-xs text-on-surface-variant flex-1 min-w-0 truncate">{item.label}</span>
+                    <input type="number" value={item.amount} onChange={e => updateItem(i, +e.target.value)} className="w-28 px-2 py-1.5 rounded-lg border border-outline-variant/20 font-mono text-sm text-right" />
+                </div>
+            ))}
+        </div>
+    );
+}
 
+export default function BudgetAnalyzer() {
     const [incomes, setIncomes] = useState<BudgetItem[]>(DEFAULT_INCOME);
     const [expenses, setExpenses] = useState<BudgetItem[]>(DEFAULT_EXPENSES);
     const [savings, setSavings] = useState<BudgetItem[]>(SAVINGS_TARGETS);
@@ -63,12 +82,6 @@ export default function BudgetAnalyzer() {
     const surplus = totalIncome - totalExpenses - totalSavings;
     const savingsRate = totalIncome > 0 ? ((totalSavings / totalIncome) * 100).toFixed(1) : '0';
     const expenseRate = totalIncome > 0 ? ((totalExpenses / totalIncome) * 100).toFixed(1) : '0';
-
-    const updateItem = (list: BudgetItem[], setList: (v: BudgetItem[]) => void, idx: number, amount: number) => {
-        const copy = [...list];
-        copy[idx] = { ...copy[idx], amount };
-        setList(copy);
-    };
 
     const getHealthColor = () => {
         if (surplus < 0) return 'text-red-600';
@@ -84,24 +97,6 @@ export default function BudgetAnalyzer() {
         if (+savingsRate >= 10) return '⚡ Needs Improvement';
         return '🚨 Critical - Save More!';
     };
-
-    function Section({ title, icon, items, setItems, color }: { title: string; icon: string; items: BudgetItem[]; setItems: (v: BudgetItem[]) => void; color: string }) {
-        return (
-            <div className="bg-white rounded-2xl shadow-lg border border-outline-variant/20 p-5 space-y-3">
-                <div className="flex items-center gap-2">
-                    <span className={`material-symbols-outlined ${color}`}>{icon}</span>
-                    <h3 className="font-bold">{title}</h3>
-                    <span className="ml-auto font-mono font-bold text-sm">{fmt(sum(items))}</span>
-                </div>
-                {items.map((item, i) => (
-                    <div key={item.label} className="flex items-center gap-3">
-                        <span className="text-xs text-on-surface-variant flex-1 min-w-0 truncate">{item.label}</span>
-                        <input type="number" value={item.amount} onChange={e => updateItem(items, setItems, i, +e.target.value)} className="w-28 px-2 py-1.5 rounded-lg border border-outline-variant/20 font-mono text-sm text-right" />
-                    </div>
-                ))}
-            </div>
-        );
-    }
 
     return (
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-5xl mx-auto space-y-6">

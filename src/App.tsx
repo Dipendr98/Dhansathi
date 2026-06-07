@@ -17,7 +17,6 @@ const OnboardingPage = lazy(() => import('@/features/onboarding/OnboardingPage')
 const SimulatorPage = lazy(() => import('@/features/simulator/SimulatorPage'));
 const ChatPage = lazy(() => import('@/features/chat/ChatPage'));
 const SettingsPage = lazy(() => import('@/features/settings/SettingsPage'));
-const PricingPage = lazy(() => import('@/features/pricing/PricingPage'));
 const ContactPage = lazy(() => import('@/features/support/ContactPage'));
 const StockDetailPage = lazy(() => import('@/features/stocks/StockDetailPage'));
 const TaxCalculator = lazy(() => import('@/features/tools/TaxCalculator'));
@@ -88,7 +87,7 @@ function App() {
             <Route path="simulator" element={<SimulatorPage />} />
             <Route path="chat" element={<ChatPage />} />
             <Route path="settings" element={<SettingsPage />} />
-            <Route path="pricing" element={<PricingPage />} />
+            <Route path="pricing" element={<Navigate to="/dashboard/settings" replace />} />
             <Route path="support" element={<ContactPage />} />
             <Route path="stock-detail" element={<StockDetailPage />} />
             <Route path="tax-calculator" element={<TaxCalculator />} />

@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import { useAuthStore } from '@/stores/authStore';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -31,21 +30,8 @@ function getToday(): string {
   return new Date().toISOString().slice(0, 10); // YYYY-MM-DD
 }
 
-function getMaxCreditsForCategory(plan: Plan, category: CreditCategory): number {
-  if (plan === 'pro') {
-    return Infinity; // Unlimited for pro users
-  }
-  // Free plan limits
-  return category === 'dhanmitra' ? 10 : 20;
-}
-
-/** Read the actual plan from authStore (single source of truth) */
-function getEffectivePlan(): Plan {
-  try {
-    const user = useAuthStore.getState().user;
-    if (user?.plan === 'pro') return 'pro';
-  } catch { /* ignore if authStore not ready */ }
-  return 'free';
+function getMaxCreditsForCategory(): number {
+  return Infinity;
 }
 
 const DEFAULT_CREDITS_USED: Record<CreditCategory, number> = { dhanmitra: 0, ai_chat: 0 };
@@ -89,7 +75,6 @@ export const usePlanStore = create<PlanStore>((set, get) => {
 
     useCredit: (category: CreditCategory = 'ai_chat') => {
       const state = get();
-      const effectivePlan = getEffectivePlan();
       // Auto-reset if date changed
       const today = getToday();
       let creditsUsed = { ...state.creditsUsed };
@@ -99,7 +84,7 @@ export const usePlanStore = create<PlanStore>((set, get) => {
         creditsDate = today;
       }
 
-      const max = getMaxCreditsForCategory(effectivePlan, category);
+      const max = getMaxCreditsForCategory();
       if ((creditsUsed[category] || 0) >= max) return false;
 
       creditsUsed[category] = (creditsUsed[category] || 0) + 1;
@@ -116,15 +101,13 @@ export const usePlanStore = create<PlanStore>((set, get) => {
 
     getRemainingCredits: (category: CreditCategory = 'ai_chat') => {
       const state = get();
-      const effectivePlan = getEffectivePlan();
       const today = getToday();
       const used = state.creditsDate !== today ? 0 : (state.creditsUsed[category] || 0);
-      return getMaxCreditsForCategory(effectivePlan, category) - used;
+      return getMaxCreditsForCategory() - used;
     },
 
-    getMaxCredits: (category: CreditCategory = 'ai_chat') => {
-      const effectivePlan = getEffectivePlan();
-      return getMaxCreditsForCategory(effectivePlan, category);
+    getMaxCredits: () => {
+      return getMaxCreditsForCategory();
     },
 
     upgradeToPro: () => {

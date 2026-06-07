@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '@/stores/authStore';
-import { useLanguageStore } from '@/stores/languageStore';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 
 interface Query {
@@ -17,7 +16,7 @@ interface Query {
 
 const CATEGORIES = [
     { value: 'account', label: 'Account & Profile', icon: 'person' },
-    { value: 'billing', label: 'Billing & Subscription', icon: 'payment' },
+    { value: 'access', label: 'Feature Access', icon: 'verified' },
     { value: 'stocks', label: 'Stocks & Trading', icon: 'trending_up' },
     { value: 'schemes', label: 'Government Schemes', icon: 'account_balance' },
     { value: 'ai', label: 'AI Features (DhanMitra)', icon: 'psychology' },
@@ -27,17 +26,16 @@ const CATEGORIES = [
 ];
 
 const FAQ_ITEMS = [
-    { q: 'How do I upgrade to Pro?', a: 'Go to Settings → Billing or visit the Pricing page to upgrade your plan via Razorpay.' },
+    { q: 'Do I need a paid plan?', a: 'No. DhanSathi features are available for free to every user.' },
     { q: 'Is DhanSathi a SEBI-registered advisor?', a: 'No. DhanSathi provides educational and informational content only. Always consult a SEBI-registered advisor for investment decisions.' },
     { q: 'How accurate is the stock data?', a: 'Stock data is fetched in real-time from Yahoo Finance API. There may be a 15-minute delay for some data points.' },
-    { q: 'Can I get a refund?', a: 'Refunds are processed within 7 business days as per our refund policy. Contact us with your payment details.' },
+    { q: 'Why do I see full access?', a: 'The platform no longer requires a paid plan for advanced tools, reports, AI features, or alerts.' },
     { q: 'How does DhanMitra AI work?', a: 'DhanMitra uses advanced AI to simulate stock scenarios based on market conditions, news sentiment, and technical indicators.' },
     { q: 'Are government scheme details accurate?', a: 'We aggregate data from official government portals. Always verify eligibility on the official scheme website.' },
 ];
 
 export default function ContactPage() {
     const { user } = useAuthStore();
-    const { lang } = useLanguageStore();
     const [activeTab, setActiveTab] = useState<'new' | 'queries' | 'faq'>('new');
     const [subject, setSubject] = useState('');
     const [category, setCategory] = useState('');

@@ -836,28 +836,6 @@ export default function AlertsPage() {
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* -- Upgrade Prompt -- */}
-      <motion.div
-        variants={fadeUp}
-        custom={5}
-        className="bg-gradient-to-r from-secondary to-secondary-container rounded-2xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0"
-      >
-        <div className="flex items-center space-x-4">
-          <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-            <span className="material-symbols-outlined text-white text-[24px]">workspace_premium</span>
-          </div>
-          <div>
-            <p className="font-headline font-bold text-white text-lg">{T('alerts', 'upgradePro', lang)}</p>
-            <p className="text-white/80 text-sm">
-              {T('alerts', 'upgradeDesc', lang)}
-            </p>
-          </div>
-        </div>
-        <button className="bg-white text-secondary font-bold text-sm px-6 py-3 rounded-xl hover:shadow-lg transition-all whitespace-nowrap">
-          {T('alerts', 'upgradeNow', lang)} — {'\u20B9'}199/mo
-        </button>
-      </motion.div>
     </motion.div>
   );
 }

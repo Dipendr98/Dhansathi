@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { getPlanConfigs } from '@/stores/subscriptionStore';
 
 /* ── Animation helpers ─────────────────────────── */
 
@@ -76,65 +75,19 @@ const BENTO_ITEMS = [
   },
 ];
 
-interface PricingTier {
-  name: string;
-  price: string;
-  period: string;
-  features: string[];
-  cta: string;
-  popular?: boolean;
-}
-
-function getDynamicPricing(): PricingTier[] {
-  try {
-    const configs = getPlanConfigs();
-    return configs.map((c: any) => ({
-      name: c.name,
-      price: c.monthlyPrice === 0 ? '₹0' : `₹${c.monthlyPrice}`,
-      period: c.monthlyPrice === 0 ? 'forever' : '/mo',
-      features: c.displayFeatures
-        .filter((f: any) => f.enabled)
-        .slice(0, 5)
-        .map((f: any) => f.text),
-      cta: c.id === 'free' ? 'Get Started' : c.id === 'pro' ? 'Start Free Trial' : 'Contact Sales',
-      popular: c.id === 'pro',
-    }));
-  } catch {
-    return FALLBACK_PRICING;
-  }
-}
-
-const FALLBACK_PRICING: PricingTier[] = [
-  {
-    name: 'Free',
-    price: '₹0',
-    period: 'forever',
-    features: [
-      'Basic scheme eligibility',
-      '5 stock screener searches/day',
-      'Community support',
-    ],
-    cta: 'Get Started',
-  },
-  {
-    name: 'Pro',
-    price: '₹199',
-    period: '/mo',
-    popular: true,
-    features: [
-      'Unlimited scheme matching',
-      'Unlimited stock screener',
-      'Crossover alerts',
-      'DhanMitra AI chat',
-      'Priority support',
-    ],
-    cta: 'Start Free Trial',
-  },
+const INCLUDED_FEATURES = [
+  'Unlimited scheme matching',
+  'All stock filters and screeners',
+  'Crossover alerts',
+  'DhanMitra AI chat',
+  'AI simulator',
+  'Tax calculator',
+  'Budget analyzer',
+  'Monthly reports',
+  'Priority support',
 ];
 
-const PRICING: PricingTier[] = getDynamicPricing();
-
-const NAV_LINKS = ['Features', 'Pricing', 'About'];
+const NAV_LINKS = ['Features', 'Access', 'About'];
 
 const FOOTER_PRODUCT = ['Scheme Finder', 'Stock Screener', 'DhanMitra AI', 'Crossover Alerts'];
 const FOOTER_COMPANY = ['About', 'Blog', 'Careers', 'Press Kit'];
@@ -399,8 +352,8 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Pricing ── */}
-      <section id="pricing" className="py-20 md:py-28 px-4">
+      {/* ── Included Access ── */}
+      <section id="access" className="py-20 md:py-28 px-4">
         <div className="max-w-6xl mx-auto">
           <motion.div
             initial="hidden"
@@ -414,21 +367,21 @@ export default function LandingPage() {
               custom={0}
               className="text-sm font-bold text-primary uppercase tracking-widest"
             >
-              Pricing
+              Access
             </motion.p>
             <motion.h2
               variants={fadeUp}
               custom={1}
               className="font-headline text-3xl md:text-4xl font-extrabold text-on-surface mt-3"
             >
-              Transparent Pricing
+              Everything Included
             </motion.h2>
             <motion.p
               variants={fadeUp}
               custom={2}
               className="mt-4 text-on-surface-variant max-w-xl mx-auto"
             >
-              Start free. Upgrade when you're ready.
+              DhanSathi's financial tools are free for every user.
             </motion.p>
           </motion.div>
 
@@ -437,53 +390,31 @@ export default function LandingPage() {
             whileInView="visible"
             viewport={{ once: true, margin: '-60px' }}
             variants={stagger}
-            className="grid md:grid-cols-2 gap-8 max-w-3xl mx-auto"
+            className="bg-surface-container-lowest rounded-3xl border border-outline-variant/20 p-6 md:p-8 max-w-4xl mx-auto"
           >
-            {PRICING.map((tier, i) => (
-              <motion.div
-                key={tier.name}
-                variants={fadeUp}
-                custom={i}
-                className={`relative rounded-3xl p-8 border transition-all hover:shadow-xl ${tier.popular
-                  ? 'bg-surface-container-lowest border-primary/30 shadow-lg shadow-primary/10 scale-[1.03]'
-                  : 'bg-surface-container-lowest border-outline-variant/20'
-                  }`}
-              >
-                {tier.popular && (
-                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-gradient-to-r from-primary to-primary-container text-on-primary text-xs font-bold px-4 py-1.5 rounded-full">
-                    Most Popular
-                  </div>
-                )}
-                <p className="text-sm font-bold text-on-surface-variant uppercase tracking-wider">
-                  {tier.name}
-                </p>
-                <div className="mt-4 flex items-baseline space-x-1">
-                  <span className="font-mono text-4xl font-extrabold text-on-surface">
-                    {tier.price}
-                  </span>
-                  <span className="text-on-surface-variant text-sm">{tier.period}</span>
+            <motion.div variants={fadeUp} custom={0} className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 border-b border-outline-variant/20 pb-6 mb-6">
+              <div>
+                <p className="text-sm font-bold text-on-surface-variant uppercase tracking-wider">Full Access</p>
+                <div className="mt-3 flex items-baseline space-x-2">
+                  <span className="font-mono text-4xl font-extrabold text-on-surface">Free</span>
+                  <span className="text-on-surface-variant text-sm">for everyone</span>
                 </div>
-                <ul className="mt-8 space-y-4">
-                  {tier.features.map((f) => (
-                    <li key={f} className="flex items-start space-x-3">
-                      <span className="material-symbols-outlined text-tertiary text-lg mt-0.5">
-                        check_circle
-                      </span>
-                      <span className="text-sm text-on-surface-variant">{f}</span>
-                    </li>
-                  ))}
-                </ul>
-                <Link
-                  to="/signup"
-                  className={`mt-8 block text-center font-bold text-sm py-3 rounded-xl transition-all no-underline ${tier.popular
-                    ? 'bg-gradient-to-r from-primary to-primary-container text-on-primary shadow-md hover:shadow-lg'
-                    : 'bg-surface-container-high text-primary hover:bg-surface-container-highest'
-                    }`}
-                >
-                  {tier.cta}
-                </Link>
-              </motion.div>
-            ))}
+              </div>
+              <Link
+                to="/signup"
+                className="inline-flex justify-center font-bold text-sm py-3 px-6 rounded-xl transition-all no-underline bg-gradient-to-r from-primary to-primary-container text-on-primary shadow-md hover:shadow-lg"
+              >
+                Get Started
+              </Link>
+            </motion.div>
+            <div className="grid sm:grid-cols-2 gap-4">
+              {INCLUDED_FEATURES.map((feature, i) => (
+                <motion.div key={feature} variants={fadeUp} custom={i + 1} className="flex items-start space-x-3">
+                  <span className="material-symbols-outlined text-tertiary text-lg mt-0.5">check_circle</span>
+                  <span className="text-sm text-on-surface-variant">{feature}</span>
+                </motion.div>
+              ))}
+            </div>
           </motion.div>
         </div>
       </section>
@@ -592,7 +523,7 @@ export default function LandingPage() {
         {[
           { icon: 'home', label: 'Home', href: '#' },
           { icon: 'auto_awesome', label: 'Features', href: '#features' },
-          { icon: 'payments', label: 'Pricing', href: '#pricing' },
+          { icon: 'verified', label: 'Access', href: '#access' },
           { icon: 'login', label: 'Login', to: '/login' },
         ].map((item) =>
           item.to ? (

@@ -76,18 +76,8 @@ export default function TermsConditions() {
                         </section>
 
                         <section>
-                            <h2 className="text-xl font-bold text-on-surface mt-8 mb-3">5. Subscription Plans</h2>
-                            <h3 className="text-lg font-semibold text-on-surface mt-4 mb-2">5.1 Free Plan</h3>
-                            <p>Includes limited access to stock screening, scheme discovery, and AI features with daily credit limits.</p>
-                            <h3 className="text-lg font-semibold text-on-surface mt-4 mb-2">5.2 Pro Plan</h3>
-                            <p>Paid subscription with enhanced features, higher credit limits, and priority support. Pricing is displayed on the Platform.</p>
-                            <h3 className="text-lg font-semibold text-on-surface mt-4 mb-2">5.3 Payment & Refunds</h3>
-                            <ul className="list-disc pl-6 space-y-1">
-                                <li>Payments are processed securely through Razorpay</li>
-                                <li>Subscriptions auto-renew unless cancelled before the renewal date</li>
-                                <li>Refunds are processed as per our refund policy within 7 business days</li>
-                                <li>No refunds for partial month usage after cancellation</li>
-                            </ul>
+                            <h2 className="text-xl font-bold text-on-surface mt-8 mb-3">5. Feature Access</h2>
+                            <p>DhanSathi features are currently provided free of charge to all users. We do not require a paid plan to access stock screening, scheme discovery, AI tools, calculators, alerts, reports, or support features.</p>
                         </section>
 
                         <section>
@@ -137,7 +127,6 @@ export default function TermsConditions() {
                             <ul className="list-disc pl-6 space-y-1">
                                 <li>Violation of these Terms</li>
                                 <li>Fraudulent or illegal activity</li>
-                                <li>Non-payment of subscription fees</li>
                                 <li>Any reason at our sole discretion</li>
                             </ul>
                         </section>

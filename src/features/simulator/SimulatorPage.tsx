@@ -48,59 +48,6 @@ interface PastSimulation {
   targetPrice: number;
 }
 
-const STOCKS = [
-  { symbol: 'ADANIENT', name: 'Adani Enterprises' },
-  { symbol: 'ADANIPORTS', name: 'Adani Ports & SEZ' },
-  { symbol: 'APOLLOHOSP', name: 'Apollo Hospitals' },
-  { symbol: 'ASIANPAINT', name: 'Asian Paints' },
-  { symbol: 'AXISBANK', name: 'Axis Bank' },
-  { symbol: 'BAJAJ-AUTO', name: 'Bajaj Auto' },
-  { symbol: 'BAJFINANCE', name: 'Bajaj Finance' },
-  { symbol: 'BAJAJFINSV', name: 'Bajaj Finserv' },
-  { symbol: 'BPCL', name: 'Bharat Petroleum' },
-  { symbol: 'BHARTIARTL', name: 'Bharti Airtel' },
-  { symbol: 'BRITANNIA', name: 'Britannia Industries' },
-  { symbol: 'CIPLA', name: 'Cipla' },
-  { symbol: 'COALINDIA', name: 'Coal India' },
-  { symbol: 'DIVISLAB', name: "Divi's Laboratories" },
-  { symbol: 'DRREDDY', name: "Dr. Reddy's Laboratories" },
-  { symbol: 'EICHERMOT', name: 'Eicher Motors' },
-  { symbol: 'GRASIM', name: 'Grasim Industries' },
-  { symbol: 'HCLTECH', name: 'HCL Technologies' },
-  { symbol: 'HDFCBANK', name: 'HDFC Bank' },
-  { symbol: 'HDFCLIFE', name: 'HDFC Life Insurance' },
-  { symbol: 'HEROMOTOCO', name: 'Hero MotoCorp' },
-  { symbol: 'HINDALCO', name: 'Hindalco Industries' },
-  { symbol: 'HINDUNILVR', name: 'Hindustan Unilever' },
-  { symbol: 'ICICIBANK', name: 'ICICI Bank' },
-  { symbol: 'INDUSINDBK', name: 'IndusInd Bank' },
-  { symbol: 'INFY', name: 'Infosys' },
-  { symbol: 'ITC', name: 'ITC Limited' },
-  { symbol: 'JSWSTEEL', name: 'JSW Steel' },
-  { symbol: 'KOTAKBANK', name: 'Kotak Mahindra Bank' },
-  { symbol: 'LT', name: 'Larsen & Toubro' },
-  { symbol: 'LTIM', name: 'LTIMindtree' },
-  { symbol: 'M&M', name: 'Mahindra & Mahindra' },
-  { symbol: 'MARUTI', name: 'Maruti Suzuki' },
-  { symbol: 'NESTLEIND', name: 'Nestle India' },
-  { symbol: 'NTPC', name: 'NTPC' },
-  { symbol: 'ONGC', name: 'Oil & Natural Gas Corp' },
-  { symbol: 'POWERGRID', name: 'Power Grid Corp' },
-  { symbol: 'RELIANCE', name: 'Reliance Industries' },
-  { symbol: 'SBILIFE', name: 'SBI Life Insurance' },
-  { symbol: 'SBIN', name: 'State Bank of India' },
-  { symbol: 'SUNPHARMA', name: 'Sun Pharma' },
-  { symbol: 'TATACONSUM', name: 'Tata Consumer Products' },
-  { symbol: 'TATAMOTORS', name: 'Tata Motors' },
-  { symbol: 'TATASTEEL', name: 'Tata Steel' },
-  { symbol: 'TCS', name: 'Tata Consultancy Services' },
-  { symbol: 'TECHM', name: 'Tech Mahindra' },
-  { symbol: 'TITAN', name: 'Titan Company' },
-  { symbol: 'ULTRACEMCO', name: 'UltraTech Cement' },
-  { symbol: 'UPL', name: 'UPL Limited' },
-  { symbol: 'WIPRO', name: 'Wipro' },
-];
-
 const SCENARIO_PRESETS: ScenarioPreset[] = [
   {
     id: 'rbi_rate',
@@ -166,8 +113,6 @@ export default function SimulatorPage() {
   const lang = useLanguageStore((s) => s.lang);
   const planUseCredit = usePlanStore((s) => s.useCredit);
   const planRemaining = usePlanStore((s) => s.getRemainingCredits);
-  const planUpgrade = usePlanStore((s) => s.upgradeToPro);
-  const plan = usePlanStore((s) => s.plan);
   const planGetMax = usePlanStore((s) => s.getMaxCredits);
   const maxCredits = planGetMax('dhanmitra');
 
@@ -285,7 +230,7 @@ export default function SimulatorPage() {
       setIsRunning(false);
       setProgress(null);
     }
-  }, [selectedStock, selectedScenario, customScenario, horizon, creditsRemaining, planUseCredit]);
+  }, [selectedStock, selectedScenario, customScenario, horizon, creditsRemaining, planUseCredit, user]);
 
   return (
     <motion.div
@@ -330,12 +275,7 @@ export default function SimulatorPage() {
                 <><span className="font-mono">{creditsRemaining}</span>/{maxCredits}</>
               )} {T('simulator', 'credits', lang)}
             </span>
-            {plan === 'free' && (
-              <span className="text-[10px] font-bold text-primary bg-primary-fixed/40 px-1.5 py-0.5 rounded">FREE</span>
-            )}
-            {plan === 'pro' && (
-              <span className="text-[10px] font-bold text-white bg-primary px-1.5 py-0.5 rounded">PRO</span>
-            )}
+            <span className="text-[10px] font-bold text-primary bg-primary-fixed/40 px-1.5 py-0.5 rounded">FULL ACCESS</span>
           </div>
         </div>
       </motion.div>
@@ -608,14 +548,6 @@ export default function SimulatorPage() {
                   <p className="text-sm text-error font-semibold">
                     {T('simulator', 'noCredits', lang)}
                   </p>
-                  {plan === 'free' && (
-                    <button
-                      onClick={planUpgrade}
-                      className="text-sm font-bold text-white bg-gradient-to-r from-primary to-primary-container px-4 py-2 rounded-xl hover:shadow-lg transition-all"
-                    >
-                      {T('simulator', 'upgradePro', lang)}
-                    </button>
-                  )}
                 </div>
               )}
             </div>
@@ -984,16 +916,8 @@ export default function SimulatorPage() {
                 )}
               </p>
               <p className="text-sm text-on-surface-variant mt-1">
-                AI credits remaining today ({plan === 'pro' ? 'Pro' : 'Free'} plan)
+                AI credits remaining today
               </p>
-              {plan === 'free' && (
-                <button
-                  onClick={planUpgrade}
-                  className="mt-4 bg-gradient-to-r from-primary to-primary-container text-white font-semibold text-sm px-6 py-3 rounded-xl hover:shadow-lg transition-all"
-                >
-                  {T('simulator', 'upgradePro', lang)}
-                </button>
-              )}
             </div>
           </motion.div>
         )}

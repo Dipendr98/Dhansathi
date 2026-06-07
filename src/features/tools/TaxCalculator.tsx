@@ -1,7 +1,5 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { useAuthStore } from '@/stores/authStore';
-import { useNavigate } from 'react-router-dom';
 
 type Regime = 'old' | 'new';
 
@@ -34,21 +32,6 @@ function calcTax(income: number, slabs: typeof OLD_SLABS, deductions: number) {
 }
 
 export default function TaxCalculator() {
-    const user = useAuthStore((s) => s.user);
-    const nav = useNavigate();
-    const isPro = user?.plan === 'pro';
-
-    if (!isPro) {
-        return (
-            <div className="flex flex-col items-center justify-center min-h-[400px] text-center space-y-4">
-                <span className="material-symbols-outlined text-6xl text-primary/30">lock</span>
-                <h2 className="text-xl font-bold">Pro Feature</h2>
-                <p className="text-on-surface-variant max-w-md">Tax Calculator is available on the Pro plan. Upgrade to access this and other premium features.</p>
-                <button onClick={() => nav('/dashboard/pricing')} className="px-6 py-3 bg-primary text-white rounded-xl font-bold">Upgrade to Pro</button>
-            </div>
-        );
-    }
-
     const [regime, setRegime] = useState<Regime>('new');
     const [income, setIncome] = useState(1200000);
     const [hra, setHra] = useState(0);
@@ -68,7 +51,8 @@ export default function TaxCalculator() {
     const ltcgTax = Math.max(0, ltcg - 125000) * 0.125;
     const grandTotal = result.total + stcgTax + ltcgTax;
 
-    const fmt = (n: number) => '₹' + Math.round(n).toLocaleString('en-IN');
+const fmt = (n: number) => '₹' + Math.round(n).toLocaleString('en-IN');
+type TaxSummaryRow = { l: string; v: string; bold?: boolean };
 
     return (
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-4xl mx-auto space-y-6">
@@ -142,8 +126,8 @@ export default function TaxCalculator() {
                             { l: 'Health & Education Cess (4%)', v: fmt(result.cess) },
                             ...(stcg > 0 ? [{ l: 'STCG Tax (20%)', v: fmt(stcgTax) }] : []),
                             ...(ltcg > 0 ? [{ l: 'LTCG Tax (12.5% above ₹1.25L)', v: fmt(ltcgTax) }] : []),
-                        ].map(r => (
-                            <div key={r.l} className={`flex justify-between ${(r as any).bold ? 'font-bold text-primary border-t border-primary/20 pt-2' : 'text-sm'}`}>
+                        ].map((r: TaxSummaryRow) => (
+                            <div key={r.l} className={`flex justify-between ${r.bold ? 'font-bold text-primary border-t border-primary/20 pt-2' : 'text-sm'}`}>
                                 <span className="text-on-surface-variant">{r.l}</span>
                                 <span className="font-mono">{r.v}</span>
                             </div>
