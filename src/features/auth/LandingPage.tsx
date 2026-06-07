@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useAuthStore } from '@/stores/authStore';
 
 /* ── Animation helpers ─────────────────────────── */
 
@@ -20,7 +21,7 @@ const stagger = {
 
 const TRUST_STATS = [
   { value: '10,000+', label: 'Users' },
-  { value: '700+', label: 'Schemes' },
+  { value: '1,000+', label: 'Schemes & Scholarships' },
   { value: '1,800+', label: 'Stocks' },
   { value: '₹12 Cr+', label: 'Found' },
 ];
@@ -34,7 +35,7 @@ const HOW_STEPS = [
   {
     icon: 'search_insights',
     title: 'Discover what you\'re owed',
-    desc: 'Our AI scans 700+ government schemes and unclaimed benefits in seconds.',
+    desc: 'Our AI scans 700+ government schemes and live scholarships in seconds.',
   },
   {
     icon: 'trending_up',
@@ -45,31 +46,32 @@ const HOW_STEPS = [
 
 const BENTO_ITEMS = [
   {
-    title: 'DhanMitra AI',
-    desc: 'Personal AI financial advisor trained on Indian markets, tax rules, and government schemes.',
-    icon: 'psychology',
-    className: 'md:col-span-2 md:row-span-2 bg-primary text-on-primary',
+    title: 'Ask DhanSathi AI',
+    desc: 'Your personal chatbot assistant for instantly discovering eligible schemes, finding scholarships, and general finance.',
+    icon: 'forum',
+    className: 'md:col-span-2 bg-primary text-on-primary',
     iconBg: 'bg-white/15',
     large: true,
   },
   {
-    title: 'NSE Screener',
-    desc: 'Real-time stock screening with crossover alerts and technical indicators.',
-    icon: 'monitoring',
-    className: 'bg-secondary-container text-on-secondary',
-    iconBg: 'bg-white/20',
+    title: 'DhanMitra AI Simulator',
+    desc: 'Advanced AI engine trained on live NSE data to simulate stock scenarios and analyze crossover alerts.',
+    icon: 'psychology',
+    className: 'md:col-span-2 bg-secondary text-on-secondary',
+    iconBg: 'bg-white/15',
+    large: true,
   },
   {
-    title: 'Government Trust',
-    desc: 'Track unclaimed deposits, insurance, dividends, and refunds across India.',
-    icon: 'verified_user',
-    className: 'bg-surface-container-high text-on-surface',
+    title: 'Live NSE Screener',
+    desc: 'Real-time stock screening with delivery percentages and technical indicators.',
+    icon: 'monitoring',
+    className: 'md:col-span-2 bg-surface-container-high text-on-surface',
     iconBg: 'bg-primary/10',
   },
   {
-    title: 'Scheme Direct',
-    desc: 'Apply directly to eligible government schemes with pre-filled applications.',
-    icon: 'assignment_turned_in',
+    title: 'Schemes & Scholarships',
+    desc: 'Apply to eligible government schemes and track 250+ live scholarships from central and state portals.',
+    icon: 'school',
     className: 'md:col-span-2 bg-tertiary-container text-on-tertiary',
     iconBg: 'bg-white/20',
   },
@@ -77,6 +79,7 @@ const BENTO_ITEMS = [
 
 const INCLUDED_FEATURES = [
   'Unlimited scheme matching',
+  'Live scholarship feed',
   'All stock filters and screeners',
   'Crossover alerts',
   'DhanMitra AI chat',
@@ -89,7 +92,7 @@ const INCLUDED_FEATURES = [
 
 const NAV_LINKS = ['Features', 'Access', 'About'];
 
-const FOOTER_PRODUCT = ['Scheme Finder', 'Stock Screener', 'DhanMitra AI', 'Crossover Alerts'];
+const FOOTER_PRODUCT = ['Scheme Finder', 'Live Scholarships', 'Stock Screener', 'DhanMitra AI', 'Crossover Alerts'];
 const FOOTER_COMPANY = ['About', 'Blog', 'Careers', 'Press Kit'];
 const FOOTER_SOCIAL = [
   { icon: 'public', label: 'Website' },
@@ -100,8 +103,10 @@ const FOOTER_SOCIAL = [
 /* ── Component ─────────────────────────────────── */
 
 export default function LandingPage() {
+  const { user } = useAuthStore();
+
   return (
-    <div className="bg-background min-h-screen font-body antialiased relative">
+    <div className="bg-background min-h-screen font-sans antialiased text-on-surface selection:bg-primary/20 selection:text-primary">
       {/* ── Tricolor bar ── */}
       <div className="fixed top-0 left-0 w-full h-1 flex z-[60]">
         <div className="h-full flex-1 bg-saffron" />
@@ -137,35 +142,56 @@ export default function LandingPage() {
 
           {/* Actions */}
           <div className="hidden md:flex items-center space-x-3">
-            <Link
-              to="/login"
-              className="text-sm font-semibold text-primary hover:text-primary-container transition-colors no-underline"
-            >
-              Login
-            </Link>
-            <Link
-              to="/signup"
-              className="text-sm font-bold text-on-primary bg-gradient-to-r from-primary to-primary-container px-5 py-2.5 rounded-xl hover:shadow-lg hover:shadow-primary/20 transition-all no-underline"
-            >
-              Sign Up Free
-            </Link>
+            {user ? (
+              <Link
+                to="/dashboard"
+                className="text-sm font-bold text-on-primary bg-gradient-to-r from-primary to-primary-container px-5 py-2.5 rounded-xl hover:shadow-lg hover:shadow-primary/20 transition-all no-underline"
+              >
+                Go to Dashboard
+              </Link>
+            ) : (
+              <>
+                <Link
+                  to="/login"
+                  className="text-sm font-semibold text-primary hover:text-primary-container transition-colors no-underline"
+                >
+                  Login
+                </Link>
+                <Link
+                  to="/signup"
+                  className="text-sm font-bold text-on-primary bg-gradient-to-r from-primary to-primary-container px-5 py-2.5 rounded-xl hover:shadow-lg hover:shadow-primary/20 transition-all no-underline"
+                >
+                  Sign Up Free
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile menu button */}
-          <Link
-            to="/login"
-            className="md:hidden text-sm font-bold text-on-primary bg-primary px-4 py-2 rounded-xl no-underline"
-          >
-            Login
-          </Link>
+          {user ? (
+            <Link
+              to="/dashboard"
+              className="md:hidden text-sm font-bold text-on-primary bg-primary px-4 py-2 rounded-xl no-underline"
+            >
+              Dashboard
+            </Link>
+          ) : (
+            <Link
+              to="/login"
+              className="md:hidden text-sm font-bold text-on-primary bg-primary px-4 py-2 rounded-xl no-underline"
+            >
+              Login
+            </Link>
+          )}
         </div>
       </header>
 
       {/* ── Hero ── */}
       <section className="relative pt-32 pb-20 md:pt-44 md:pb-28 px-4 overflow-hidden">
         {/* Decorative blurs */}
-        <div className="absolute -top-40 -right-40 w-[500px] h-[500px] bg-primary/5 rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-[500px] h-[500px] bg-secondary/5 rounded-full blur-3xl" />
+        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-primary/10 rounded-full blur-[100px] animate-pulse pointer-events-none" style={{ animationDuration: '8s' }} />
+        <div className="absolute top-40 left-0 w-[500px] h-[500px] bg-secondary/10 rounded-full blur-[100px] animate-pulse pointer-events-none" style={{ animationDuration: '10s' }} />
+        <div className="absolute -bottom-40 left-1/3 w-[600px] h-[600px] bg-tertiary/10 rounded-full blur-[100px] animate-pulse pointer-events-none" style={{ animationDuration: '12s' }} />
 
         <div className="max-w-4xl mx-auto text-center relative">
           <motion.div initial="hidden" animate="visible" variants={stagger}>
@@ -184,7 +210,9 @@ export default function LandingPage() {
               className="font-headline text-4xl sm:text-5xl md:text-6xl font-extrabold text-on-surface leading-[1.1] tracking-tight"
             >
               Indians Leave{' '}
-              <span className="font-mono text-secondary">₹2,00,000 Crore</span>{' '}
+              <span className="font-mono text-transparent bg-clip-text bg-gradient-to-r from-secondary to-tertiary animate-pulse shadow-sm">
+                ₹2,00,000 Crore
+              </span>{' '}
               Unclaimed Every Year.
             </motion.h1>
 
@@ -201,18 +229,106 @@ export default function LandingPage() {
               custom={3}
               className="mt-6 text-lg text-on-surface-variant max-w-2xl mx-auto leading-relaxed"
             >
-              DhanSathi finds your unclaimed government benefits, screens NSE stocks,
-              and gives you an AI-powered financial advisor — all in one place.
+              Discover unclaimed benefits, track live scholarships, and screen NSE stocks. 
+              Powered by our Dual-AI: <strong className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary-container font-extrabold animate-pulse">Ask DhanSathi</strong> for personal finance and <strong className="text-transparent bg-clip-text bg-gradient-to-r from-secondary to-secondary-container font-extrabold animate-pulse delay-75">DhanMitra</strong> for stock simulations.
             </motion.p>
 
             <motion.div variants={fadeUp} custom={4} className="mt-10">
-              <Link
-                to="/signup"
-                className="inline-flex items-center space-x-2 bg-gradient-to-r from-primary to-primary-container text-on-primary font-bold text-lg px-8 py-4 rounded-2xl shadow-xl shadow-primary/25 hover:shadow-2xl hover:shadow-primary/30 hover:scale-[1.02] transition-all no-underline"
-              >
-                <span className="material-symbols-outlined">search</span>
-                <span>Check My Benefits — Free</span>
-              </Link>
+              {user ? (
+                <Link
+                  to="/dashboard"
+                  className="inline-flex items-center space-x-2 bg-gradient-to-r from-primary to-primary-container text-on-primary font-bold text-lg px-8 py-4 rounded-2xl shadow-xl shadow-primary/25 hover:shadow-2xl hover:shadow-primary/30 hover:scale-[1.02] transition-all no-underline"
+                >
+                  <span className="material-symbols-outlined">dashboard</span>
+                  <span>Open Dashboard</span>
+                </Link>
+              ) : (
+                <Link
+                  to="/signup"
+                  className="inline-flex items-center space-x-2 bg-gradient-to-r from-primary to-primary-container text-on-primary font-bold text-lg px-8 py-4 rounded-2xl shadow-xl shadow-primary/25 hover:shadow-2xl hover:shadow-primary/30 hover:scale-[1.02] transition-all no-underline"
+                >
+                  <span className="material-symbols-outlined">search</span>
+                  <span>Check My Benefits — Free</span>
+                </Link>
+              )}
+            </motion.div>
+
+            {/* Glassmorphic Product Preview */}
+            <motion.div variants={fadeUp} custom={5} className="mt-16 md:mt-24 relative max-w-5xl mx-auto hidden sm:block">
+               {/* Glow effect at the bottom */}
+               <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent z-10 pointer-events-none" />
+               <div className="relative rounded-[2rem] border border-outline-variant/30 bg-white/40 backdrop-blur-2xl shadow-[0_20px_50px_rgba(0,0,0,0.1)] overflow-hidden p-2">
+                 <div className="rounded-[1.5rem] bg-surface-container-lowest/80 border border-outline-variant/20 overflow-hidden relative shadow-inner">
+                   {/* Mock UI Header */}
+                   <div className="h-12 border-b border-outline-variant/10 flex items-center px-4 bg-surface-container-lowest/50 backdrop-blur-md">
+                     <div className="flex space-x-2">
+                       <div className="w-3 h-3 rounded-full bg-error/80" />
+                       <div className="w-3 h-3 rounded-full bg-saffron/80" />
+                       <div className="w-3 h-3 rounded-full bg-india-green/80" />
+                     </div>
+                   </div>
+                   {/* Mock UI Content */}
+                   <div className="grid md:grid-cols-3 gap-0 h-[400px]">
+                      {/* Sidebar */}
+                      <div className="border-r border-outline-variant/10 p-6 bg-surface-container-low/30">
+                        <div className="space-y-4">
+                          <div className="h-8 bg-surface-container-high/50 rounded-lg w-full animate-pulse" />
+                          <div className="h-4 bg-surface-container/50 rounded w-3/4 animate-pulse" />
+                          <div className="h-4 bg-surface-container/50 rounded w-1/2 animate-pulse" />
+                          <div className="h-4 bg-surface-container/50 rounded w-5/6 animate-pulse" />
+                          <div className="mt-8 h-32 bg-primary/5 rounded-xl border border-primary/10" />
+                        </div>
+                      </div>
+                      {/* Main Dashboard */}
+                      <div className="md:col-span-2 p-6 md:p-8 bg-surface-container-lowest/60 relative overflow-hidden bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/5 via-transparent to-transparent">
+                        
+                        {/* Floating Cards */}
+                        <motion.div 
+                          initial={{ y: 30, opacity: 0 }}
+                          animate={{ y: [0, -10, 0], opacity: 1 }}
+                          transition={{ 
+                            y: { duration: 4, repeat: Infinity, ease: "easeInOut" },
+                            opacity: { duration: 0.8, delay: 0.8 }
+                          }}
+                          className="absolute top-10 left-10 w-72 bg-white/90 backdrop-blur-xl rounded-2xl shadow-xl border border-tertiary/20 p-5 transform -rotate-2 hover:rotate-0 transition-transform"
+                        >
+                          <div className="flex items-center space-x-3 mb-3">
+                            <div className="w-12 h-12 rounded-full bg-tertiary/10 flex items-center justify-center">
+                              <span className="material-symbols-outlined text-tertiary text-2xl">school</span>
+                            </div>
+                            <div>
+                              <p className="text-[10px] font-bold text-tertiary uppercase tracking-wider">Perfect Match</p>
+                              <p className="font-headline font-bold text-on-surface text-lg">₹50,000 Scholarship</p>
+                            </div>
+                          </div>
+                          <p className="text-xs text-on-surface-variant font-medium">Post Matric Scholarship Scheme • Apply in 5 days</p>
+                        </motion.div>
+
+                        <motion.div 
+                          initial={{ y: 30, opacity: 0 }}
+                          animate={{ y: [0, -10, 0], opacity: 1 }}
+                          transition={{ 
+                            y: { duration: 4, repeat: Infinity, ease: "easeInOut", delay: 0.5 },
+                            opacity: { duration: 0.8, delay: 1.2 }
+                          }}
+                          className="absolute top-44 right-10 w-72 bg-white/90 backdrop-blur-xl rounded-2xl shadow-xl border border-secondary/20 p-5 transform rotate-2 hover:rotate-0 transition-transform"
+                        >
+                          <div className="flex items-center space-x-3 mb-3">
+                            <div className="w-12 h-12 rounded-full bg-secondary/10 flex items-center justify-center">
+                              <span className="material-symbols-outlined text-secondary text-2xl">trending_up</span>
+                            </div>
+                            <div>
+                              <p className="text-[10px] font-bold text-secondary uppercase tracking-wider">Stock Alert</p>
+                              <p className="font-headline font-bold text-on-surface text-lg">RELIANCE</p>
+                            </div>
+                          </div>
+                          <p className="text-xs text-on-surface-variant font-medium">Golden Crossover Detected (SMA 50 &gt; 200)</p>
+                        </motion.div>
+
+                      </div>
+                   </div>
+                 </div>
+               </div>
             </motion.div>
           </motion.div>
         </div>
@@ -278,8 +394,8 @@ export default function LandingPage() {
                 custom={i}
                 className="bg-surface-container-lowest rounded-3xl p-8 border border-outline-variant/20 hover:shadow-xl hover:shadow-primary/5 transition-all group"
               >
-                <div className="w-14 h-14 rounded-2xl bg-primary-fixed flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                  <span className="material-symbols-outlined text-primary text-[28px]">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-fixed to-primary/10 flex items-center justify-center mb-6 group-hover:scale-110 group-hover:rotate-3 transition-transform shadow-lg shadow-primary/10">
+                  <span className="material-symbols-outlined text-primary text-[32px]">
                     {step.icon}
                   </span>
                 </div>
@@ -324,26 +440,34 @@ export default function LandingPage() {
             whileInView="visible"
             viewport={{ once: true, margin: '-60px' }}
             variants={stagger}
-            className="grid md:grid-cols-4 gap-5 auto-rows-[200px]"
+            className="grid md:grid-cols-4 gap-5"
           >
             {BENTO_ITEMS.map((item, i) => (
               <motion.div
                 key={item.title}
                 variants={fadeUp}
                 custom={i}
-                className={`rounded-3xl p-8 flex flex-col justify-between overflow-hidden relative group hover:scale-[1.01] transition-transform ${item.className}`}
+                className={`rounded-3xl p-8 flex flex-col justify-between overflow-hidden relative group hover:scale-[1.02] hover:-translate-y-1 transition-all duration-300 shadow-sm hover:shadow-xl ${item.className} ${item.large ? 'shadow-primary/20 ring-1 ring-white/20' : ''}`}
               >
-                <div>
+                {/* Decorative subtle background gradient */}
+                <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+                
+                {/* Glow for AI cards */}
+                {item.large && (
+                  <div className="absolute -top-20 -right-20 w-40 h-40 bg-white/20 blur-3xl rounded-full group-hover:bg-white/30 transition-colors pointer-events-none" />
+                )}
+                
+                <div className="relative z-10">
                   <div
-                    className={`w-12 h-12 rounded-2xl ${item.iconBg} flex items-center justify-center mb-4`}
+                    className={`w-14 h-14 rounded-2xl ${item.iconBg} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-sm`}
                   >
-                    <span className="material-symbols-outlined text-[26px]">{item.icon}</span>
+                    <span className="material-symbols-outlined text-[28px]">{item.icon}</span>
                   </div>
-                  <h3 className={`font-headline font-bold mb-2 ${item.large ? 'text-2xl' : 'text-lg'}`}>
+                  <h3 className={`font-headline font-bold mb-3 ${item.large ? 'text-3xl' : 'text-xl'}`}>
                     {item.title}
                   </h3>
                 </div>
-                <p className={`text-sm leading-relaxed ${item.large ? 'opacity-80 max-w-sm' : 'opacity-80'}`}>
+                <p className={`relative z-10 text-sm leading-relaxed ${item.large ? 'opacity-90 max-w-sm text-base' : 'opacity-80'}`}>
                   {item.desc}
                 </p>
               </motion.div>

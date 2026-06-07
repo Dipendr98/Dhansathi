@@ -1,6 +1,13 @@
-import { Outlet } from 'react-router-dom';
+import { Outlet, Navigate } from 'react-router-dom';
+import { useAuthStore } from '@/stores/authStore';
 
 export default function AuthLayout() {
+  const { user } = useAuthStore();
+
+  if (user) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
   return (
     <div className="bg-background min-h-screen flex flex-col items-center justify-center p-6 antialiased relative">
       {/* Tricolor bar */}
