@@ -538,9 +538,9 @@ ${scholarshipContext}
 ${liveStockContext}`;
 
   if (proTools) {
-    const totalIncome = proTools.budgetIncomes.reduce((a, b) => a + b.amount, 0);
-    const totalExp = proTools.budgetExpenses.reduce((a, b) => a + b.amount, 0);
-    const totalSav = proTools.budgetSavings.reduce((a, b) => a + b.amount, 0);
+    const totalIncome = proTools.budgetIncomes.reduce((a: number, b: any) => a + b.amount, 0);
+    const totalExp = proTools.budgetNeeds.reduce((a: number, b: any) => a + b.amount, 0) + proTools.budgetWants.reduce((a: number, b: any) => a + b.amount, 0);
+    const totalSav = proTools.budgetSavings.reduce((a: number, b: any) => a + b.amount, 0);
     
     prompt += `\n\nUser's Pro Tools Data (from the DhanSathi Tax Calculator and Budget Analyzer):
 - Budget: Total Income ₹${totalIncome}, Total Expenses ₹${totalExp}, Total Savings ₹${totalSav}.
