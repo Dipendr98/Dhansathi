@@ -30,8 +30,8 @@ function getToday(): string {
   return new Date().toISOString().slice(0, 10); // YYYY-MM-DD
 }
 
-function getMaxCreditsForCategory(): number {
-  return Infinity;
+function getMaxCreditsForCategory(category?: CreditCategory): number {
+  return 20;
 }
 
 const DEFAULT_CREDITS_USED: Record<CreditCategory, number> = { dhanmitra: 0, ai_chat: 0 };
@@ -84,7 +84,7 @@ export const usePlanStore = create<PlanStore>((set, get) => {
         creditsDate = today;
       }
 
-      const max = getMaxCreditsForCategory();
+      const max = getMaxCreditsForCategory(category);
       if ((creditsUsed[category] || 0) >= max) return false;
 
       creditsUsed[category] = (creditsUsed[category] || 0) + 1;
@@ -103,11 +103,11 @@ export const usePlanStore = create<PlanStore>((set, get) => {
       const state = get();
       const today = getToday();
       const used = state.creditsDate !== today ? 0 : (state.creditsUsed[category] || 0);
-      return getMaxCreditsForCategory() - used;
+      return getMaxCreditsForCategory(category) - used;
     },
 
-    getMaxCredits: () => {
-      return getMaxCreditsForCategory();
+    getMaxCredits: (category?: CreditCategory) => {
+      return getMaxCreditsForCategory(category);
     },
 
     upgradeToPro: () => {

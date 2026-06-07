@@ -47,8 +47,14 @@ export default function SchemesPage() {
   const profile = user;
 
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
-  const [activeCategory, setActiveCategory] = useState('all');
+  const [activeCategory, setActiveCategory] = useState<string>('all');
   const [search, setSearch] = useState('');
+  const [visibleCount, setVisibleCount] = useState(30);
+
+  // Reset pagination when filters change
+  useEffect(() => {
+    setVisibleCount(30);
+  }, [activeFilter, activeCategory, search]);
   const [liveFeed, setLiveFeed] = useState<LiveSchemeFeed | null>(null);
 
   useEffect(() => {
@@ -125,15 +131,19 @@ export default function SchemesPage() {
     return schemes;
   }, [schemeMatches, allSchemes, activeFilter, activeCategory, search]);
 
+  const paginatedSchemes = useMemo(() => {
+    return displaySchemes.slice(0, visibleCount);
+  }, [displaySchemes, visibleCount]);
+
   const schemesByCategory = useMemo(() => {
     const groups = new Map<string, GovernmentScheme[]>();
-    for (const scheme of displaySchemes) {
+    for (const scheme of paginatedSchemes) {
       const category = getPrimarySchemeCategory(scheme);
       groups.set(category, [...(groups.get(category) || []), scheme]);
     }
 
     return [...groups.entries()].sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]));
-  }, [displaySchemes]);
+  }, [paginatedSchemes]);
 
   /* ── Get match score for a scheme ──────────────────────────────────────── */
   function getMatchScore(schemeId: string): number | null {
@@ -448,6 +458,17 @@ export default function SchemesPage() {
               </div>
             </section>
           ))}
+
+          {visibleCount < displaySchemes.length && (
+            <div className="flex justify-center pt-8 pb-4">
+              <button
+                onClick={() => setVisibleCount((v) => v + 30)}
+                className="bg-primary hover:bg-primary-container text-on-primary font-bold px-6 py-3 rounded-xl transition-colors"
+              >
+                {T('schemes', 'loadMore', lang) || 'Load More Schemes'}
+              </button>
+            </div>
+          )}
         </div>
       )}
 

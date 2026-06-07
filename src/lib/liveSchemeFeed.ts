@@ -15,7 +15,7 @@ export interface LiveSchemeFeed {
 
 export async function loadLiveSchemeFeed(): Promise<LiveSchemeFeed | null> {
   try {
-    const response = await fetch('/generated-government-schemes.json', { cache: 'no-store' });
+    const response = await fetch(`${import.meta.env.BASE_URL}generated-government-schemes.json`, { cache: 'no-store' });
     if (!response.ok) return null;
     return await response.json() as LiveSchemeFeed;
   } catch {
