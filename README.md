@@ -1,73 +1,106 @@
-# React + TypeScript + Vite
+<div align="center">
+  <img src="https://via.placeholder.com/150/f97316/ffffff?text=D" alt="DhanSathi Logo" width="80" height="80" />
+  <h1>DhanSathi - India's Sovereign Financial Intelligence Platform</h1>
+  <p><strong>Government Schemes • Scholarships • Stock Screener • AI Advisory • Pro Tools</strong></p>
+</div>
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+---
 
-Currently, two official plugins are available:
+## 🌟 What is DhanSathi?
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+DhanSathi is an open-source, full-stack financial benefits and intelligence platform designed specifically for the Indian ecosystem. It bridges the gap between Indian citizens and financial opportunities by aggregating government schemes, state scholarships, and stock market intelligence into a single, AI-driven dashboard.
 
-## React Compiler
+With our proprietary Eligibility Engine and **DhanMitra AI** (powered by Google Gemini), DhanSathi acts as a personalized financial companion for every citizen — whether you are a student looking for a scholarship, a farmer applying for state subsidies, or an investor tracking NIFTY 50 crossovers.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### ⚠️ Disclaimer
+**NOT SEBI REGISTERED.** DhanSathi is for educational and informational purposes only. We are not registered investment advisors. Do not make financial decisions based solely on our AI simulations or stock screeners. Always consult a SEBI-registered advisor before investing.
 
-## Expanding the ESLint configuration
+---
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## ✨ Features
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+- 🏛️ **Scheme & Subsidy Finder**: A strict eligibility engine matching users with 100+ Central and State government schemes based on their demographic and financial profile.
+- 🎓 **Live Scholarships**: Automated scraper pulling live scholarships from NSP and state boards with deadline urgency tracking.
+- 📈 **Stock Screener**: Real-time NIFTY/BSE screener with RSI, MACD, Volume analysis, and TradingView charts.
+- 🤖 **DhanMitra AI & Simulator**: Context-aware AI advisory using Google Gemini. Run hypothetical "Market Crash" or "Bull Run" scenarios against your portfolio.
+- 💼 **Pro Tools**: 
+  - **Tax Calculator**: Old vs. New regime comparisons (AY 2026-27).
+  - **Budget Analyzer**: 50/30/20 rule tracking with health insights.
+  - **Crossover Engine**: Calculate exact years until passive SIP income exceeds active income.
+  - **Monthly Reports**: Professional Net Worth tracking with PDF export.
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+---
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## 🛠️ Tech Stack
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+- **Frontend**: React 18, TypeScript, Vite, Tailwind CSS, Framer Motion
+- **State Management**: Zustand, React Query
+- **Backend & Database**: Supabase (PostgreSQL, Row Level Security, Edge Functions)
+- **AI Engine**: Google Gemini Pro / NVIDIA Nemotron 70B (via API)
+- **Data Pipelines**: GitHub Actions (Daily Scholarship Scrapers)
+- **Charting**: Recharts, TradingView Lightweight Charts
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+---
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## 🚀 Local Setup
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/Dipendr98/Dhansathi.git
+   cd Dhansathi
+   ```
+
+2. **Install dependencies:**
+   ```bash
+   npm install
+   ```
+
+3. **Environment Variables:**
+   Create a `.env` file in the root directory and add your keys:
+   ```env
+   VITE_SUPABASE_URL=your_supabase_url
+   VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+   VITE_GEMINI_API_KEY=your_gemini_api_key
+   VITE_DEV_NVIDIA_KEY=your_nvidia_api_key_optional
+   ```
+
+4. **Run the development server:**
+   ```bash
+   npm run dev
+   ```
+
+5. **Build for production:**
+   ```bash
+   npm run build
+   ```
+
+---
+
+## 🗄️ Database Setup (Supabase)
+
+The project relies on a PostgreSQL database hosted on Supabase. Execute the SQL migrations located in the `supabase/migrations/` folder in your Supabase SQL Editor to set up:
+- `profiles` (User demographic data)
+- `government_schemes` (Scheme data)
+- `scholarships_feed` (Scraped scholarship data)
+- `user_alerts` & `simulations`
+
+Row Level Security (RLS) is strictly enforced on the `profiles` table.
+
+---
+
+## 🗺️ Roadmap
+
+- [x] Integrate Gemini AI for DhanMitra
+- [x] Build 50/30/20 Budget Analyzer & Tax Calculator
+- [x] Set up Supabase Authentication & RLS
+- [x] **Structured Scholarship Matching**
+- [x] **Document Readiness Score & Application Tracker**
+- [x] **State-wise SEO pages for organic traffic**
+- [x] **Admin Verification Workflows for Scheme Data**
+
+---
+
+## 📄 License & Legal
+
+This project is licensed under the MIT License.
+Please review our [Privacy Policy](/privacy) and [Terms of Service](/terms) for information regarding data collection (compliant with DPDPA 2023) and our API usage guidelines.

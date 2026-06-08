@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useParams } from 'react-router-dom';
 import { SCHOLARSHIP_SOURCES } from '@/data/scholarshipSources';
 import { cn } from '@/lib/utils';
 import { CustomSelect } from '@/components/shared/CustomSelect';
+import { useAuthStore } from '@/stores/authStore';
+import { useApplicationStore } from '@/stores/useApplicationStore';
 
 type ScholarshipLevel =
   | 'school'
@@ -122,9 +125,20 @@ function formatDate(value?: string) {
 }
 
 export default function ScholarshipsPage() {
+  const user = useAuthStore((s) => s.user);
+  const trackApplication = useApplicationStore(s => s.trackApplication);
+  const applications = useApplicationStore(s => s.applications);
+  const { stateParam } = useParams<{ stateParam?: string }>();
+
   const [activeLevel, setActiveLevel] = useState<LevelFilter>('all');
   const [activeProvider, setActiveProvider] = useState<ProviderFilter>('all');
-  const [activeState, setActiveState] = useState<string>('all');
+  
+  const initialUrlState = useMemo(() => {
+    if (!stateParam) return 'all';
+    return stateParam.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
+  }, [stateParam]);
+
+  const [activeState, setActiveState] = useState<string>(initialUrlState);
   const [activeUniversity, setActiveUniversity] = useState<string>('all');
   const [activeProgram, setActiveProgram] = useState<string>('all');
   const [search, setSearch] = useState('');
@@ -437,6 +451,28 @@ export default function ScholarshipsPage() {
           {filteredScholarships.map((scholarship) => {
             const tag = providerTag(scholarship.provider);
             const closeDate = formatDate(scholarship.studentApplicationCloseDate);
+            const isTracked = !!applications[scholarship.id];
+
+            const requiredCount = scholarship.documents_required?.length || 0;
+            let readyCount = requiredCount;
+            if (user) {
+              const missingDocuments: string[] = [];
+              const reqDocs = scholarship.documents_required || [];
+              if (reqDocs.some(d => d.toLowerCase().includes('income')) && !user.has_income_certificate) {
+                missingDocuments.push('Income Certificate');
+              }
+              if (reqDocs.some(d => d.toLowerCase().includes('caste') || d.toLowerCase().includes('category')) && !user.has_caste_certificate && user.category !== 'general') {
+                missingDocuments.push('Caste Certificate');
+              }
+              if (reqDocs.some(d => d.toLowerCase().includes('domicile') || d.toLowerCase().includes('resident')) && !user.has_domicile_certificate) {
+                missingDocuments.push('Domicile Certificate');
+              }
+              if (reqDocs.some(d => d.toLowerCase().includes('bank') && d.toLowerCase().includes('aadhaar')) && !user.is_aadhaar_bank_linked) {
+                missingDocuments.push('Aadhaar Seeded Bank Account');
+              }
+              readyCount = Math.max(0, requiredCount - missingDocuments.length);
+            }
+            const docReadinessPct = requiredCount > 0 ? Math.round((readyCount / requiredCount) * 100) : 100;
 
             return (
               <article
@@ -523,6 +559,30 @@ export default function ScholarshipsPage() {
                   </div>
                 </div>
 
+                <div className="mb-4">
+                  <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-1.5">
+                    Documents Required
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {scholarship.documents_required?.slice(0, 4).map((doc) => (
+                      <span
+                        key={doc}
+                        className="text-[10px] text-on-surface-variant bg-surface-container-low px-2 py-0.5 rounded-md"
+                      >
+                        {doc}
+                      </span>
+                    ))}
+                  </div>
+                  {user && requiredCount > 0 && (
+                    <div className="mt-2 flex items-center justify-between text-xs bg-surface-container-low px-2 py-1.5 rounded-lg border border-outline-variant/30">
+                      <span className="text-on-surface-variant">Docs Ready:</span>
+                      <span className={`font-bold ${docReadinessPct === 100 ? "text-india-green" : docReadinessPct >= 50 ? "text-saffron" : "text-error"}`}>
+                        {docReadinessPct}% ({readyCount}/{requiredCount})
+                      </span>
+                    </div>
+                  )}
+                </div>
+
                 <div className="bg-surface-container-low border border-outline-variant/30 rounded-xl p-3 mb-4 space-y-2">
                   <p className="text-[10px] font-bold text-on-surface flex items-center gap-1.5">
                     <span className="material-symbols-outlined text-sm text-primary">verified_user</span>
@@ -554,23 +614,35 @@ export default function ScholarshipsPage() {
                     <span>{closeDate ? `Student application open till ${closeDate}` : "Verify deadline on official website"}</span>
                   </div>
                   <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        if (!isTracked) {
+                          trackApplication({
+                            id: scholarship.id,
+                            title: scholarship.name,
+                            type: 'scholarship',
+                            status: 'Interested',
+                            portal_url: scholarship.application_url,
+                            deadline: scholarship.studentApplicationCloseDate,
+                          });
+                        }
+                      }}
+                      disabled={isTracked}
+                      className="flex-1 inline-flex items-center justify-center gap-1.5 bg-surface-container-high hover:bg-surface-container-highest text-on-surface font-bold text-sm px-3 py-2.5 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">
+                        {isTracked ? 'check_circle' : 'bookmark_add'}
+                      </span>
+                      {isTracked ? 'Tracked' : 'Track'}
+                    </button>
                     <a
                       href={scholarship.specifications_url || scholarship.application_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex flex-1 items-center justify-center gap-2 bg-primary hover:bg-primary-container text-on-primary font-bold text-sm px-4 py-2.5 rounded-xl transition-colors"
-                    >
-                      <span className="material-symbols-outlined text-lg">description</span>
-                      Details
-                    </a>
-                    <a
-                      href={scholarship.application_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center bg-surface-container-high text-on-surface-variant hover:text-primary font-bold px-3 py-2.5 rounded-xl transition-colors"
-                      aria-label="Apply on official portal"
+                      className="inline-flex flex-[1.5] items-center justify-center gap-2 bg-primary hover:bg-primary-container text-on-primary font-bold text-sm px-4 py-2.5 rounded-xl transition-colors"
                     >
                       <span className="material-symbols-outlined text-lg">open_in_new</span>
+                      Apply
                     </a>
                   </div>
                 </div>

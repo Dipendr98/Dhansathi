@@ -307,21 +307,68 @@ function getPersonalizedStockIdeas(user: UserProfile | null, liveStocks: StockDa
 function matchesScholarshipProfile(scholarship: LiveScholarship, user: UserProfile | null): boolean {
   if (!user) return true;
 
-  const text = `${scholarship.name} ${scholarship.department} ${scholarship.target_groups.join(' ')}`.toLowerCase();
+  const text = `${scholarship.name} ${scholarship.department} ${scholarship.target_groups.join(' ')} ${scholarship.eligibility} ${scholarship.benefits}`.toLowerCase();
+  
+  // 1. Level Match (Strict)
   const levelMatch = user.education_level
     ? scholarship.education_levels.includes(user.education_level)
     : true;
-  const category = user.category?.toLowerCase();
-  const categoryMatch =
-    !category ||
-    category === 'general' ||
-    text.includes(category) ||
-    text.includes('eligible indian') ||
-    text.includes('merit');
-  const disabilityMatch = user.has_disability ? text.includes('disabil') || text.includes('specially') : true;
-  const genderMatch = user.gender === 'female' ? true : !text.includes('girl');
 
-  return levelMatch && categoryMatch && disabilityMatch && genderMatch;
+  // 2. Category Match (Strictish)
+  const category = user.category?.toLowerCase();
+  let categoryMatch = true;
+  if (category && category !== 'general') {
+    // If scholarship specifically mentions a category, check if user matches it.
+    // Otherwise assume it's open to all.
+    const mentionsSC = text.includes(' sc ') || text.includes('scheduled caste');
+    const mentionsST = text.includes(' st ') || text.includes('scheduled tribe');
+    const mentionsOBC = text.includes(' obc ') || text.includes('other backward');
+    const mentionsMinority = text.includes('minority');
+    
+    if (mentionsSC || mentionsST || mentionsOBC || mentionsMinority) {
+      if (category === 'sc' && !mentionsSC) categoryMatch = false;
+      if (category === 'st' && !mentionsST) categoryMatch = false;
+      if (category === 'obc' && !mentionsOBC) categoryMatch = false;
+      if (mentionsMinority && !user.is_minority) categoryMatch = false;
+    }
+  }
+
+  // 3. Disability Match
+  const disabilityMatch = user.has_disability ? true : !(text.includes('disabil') || text.includes('specially abled'));
+
+  // 4. Gender Match (Strict)
+  let genderMatch = true;
+  if (text.includes('girl') || text.includes('women') || text.includes('female')) {
+    genderMatch = user.gender === 'female';
+  } else if (text.includes(' boy') || text.includes(' male')) {
+    genderMatch = user.gender === 'male';
+  }
+
+  // 5. Income Match (Heuristic extraction)
+  let incomeMatch = true;
+  if (user.annual_income != null) {
+    const lakhMatch = text.match(/income.*?(\d+(?:\.\d+)?)\s*lakh/);
+    if (lakhMatch) {
+      const maxIncome = parseFloat(lakhMatch[1]) * 100000;
+      if (user.annual_income > maxIncome) {
+        incomeMatch = false;
+      }
+    }
+  }
+
+  // 6. Marks Match (Heuristic extraction)
+  let marksMatch = true;
+  if (user.last_exam_percentage != null) {
+    const pctMatch = text.match(/(\d{2})%\s*marks/);
+    if (pctMatch) {
+      const minMarks = parseFloat(pctMatch[1]);
+      if (user.last_exam_percentage < minMarks) {
+        marksMatch = false;
+      }
+    }
+  }
+
+  return levelMatch && categoryMatch && disabilityMatch && genderMatch && incomeMatch && marksMatch;
 }
 
 function buildScholarshipContext(user: UserProfile | null, feed: ScholarshipFeed | null): string {
@@ -530,6 +577,8 @@ function buildSystemPrompt(
   let prompt = `You are DhanSathi, a helpful financial assistant for users in India. You help with government scheme eligibility, stock analysis, SIP calculations, tax calculations, budget analysis, and personalized financial guidance.
 
 Use the saved profile and DhanSathi app context below whenever answering. If the user asks about scholarships, use the live scholarship context first, match by education level, category, disability, gender, income and state where possible, and mention missing profile details. ALWAYS provide the direct application or details URL for each suggested scholarship using markdown links (e.g. [Apply Here](URL)) so the user can easily click and apply. If the user asks about schemes, recommend the strongest matches first, explain why they match, mention missing profile details if any, and suggest the next action. If the user asks about stocks or trades, use the live stock context first when available. Include CMP, change %, volume, delivery %, RSI, trend, signal, entry discipline, stop-loss thinking, position sizing, and avoid guaranteed-profit language. Always include a short reminder that stock ideas are educational and not financial advice.
+
+When recommending schemes or scholarships, ALWAYS use a clear structured format. Use bold headings for: **Scheme Name**, **Benefits**, **Why it matches you**, and **Next Steps**. Also explicitly remind the user: "You can track this application by clicking 'Track' on the scheme/scholarship card in your Dashboard to add it to your Application Tracker."
 
 ${buildPersonalizationContext(user, liveStocks)}
 

@@ -102,7 +102,9 @@ function computeSchemeMatch(
   const missingCriteria: string[] = [];
   const criteria = scheme.eligibility_criteria;
 
-  // ── Age match (+20) ───────────────────────────────────────────────────
+  let isEligible = true;
+
+  // ── Age match ───────────────────────────────────────────────────
   if (criteria.min_age != null || criteria.max_age != null) {
     if (profile.date_of_birth) {
       const age = calculateAge(profile.date_of_birth);
@@ -112,11 +114,11 @@ function computeSchemeMatch(
         score += 20;
         reasons.push(`Age ${age} is within eligible range`);
       } else {
-        missingCriteria.push(
-          `Age must be ${criteria.min_age ?? '0'}\u2013${criteria.max_age ?? '100+'} years`,
-        );
+        isEligible = false;
+        missingCriteria.push(`Age must be ${criteria.min_age ?? '0'}\u2013${criteria.max_age ?? '100+'} years`);
       }
     } else {
+      isEligible = false;
       missingCriteria.push('Date of birth not provided');
     }
   } else {
@@ -124,64 +126,58 @@ function computeSchemeMatch(
     reasons.push('No age restriction');
   }
 
-  // ── State match (+20) ─────────────────────────────────────────────────
+  // ── State match ─────────────────────────────────────────────────
   if (criteria.states && criteria.states.length > 0) {
     if (
       criteria.states.includes('All') ||
-      (profile.state &&
-        criteria.states
-          .map((s) => s.toLowerCase())
-          .includes(profile.state.toLowerCase()))
+      (profile.state && criteria.states.map((s) => s.toLowerCase()).includes(profile.state.toLowerCase()))
     ) {
       score += 20;
       reasons.push(`Available in ${profile.state}`);
     } else if (!profile.state) {
+      isEligible = false;
       missingCriteria.push('State not provided in profile');
     } else {
-      missingCriteria.push(
-        `Only available in: ${criteria.states.slice(0, 3).join(', ')}${criteria.states.length > 3 ? '...' : ''}`,
-      );
+      isEligible = false;
+      missingCriteria.push(`Only available in: ${criteria.states.slice(0, 3).join(', ')}${criteria.states.length > 3 ? '...' : ''}`);
     }
   } else {
     score += 20;
     reasons.push('Available across all states');
   }
 
-  // ── Category match (+15) ──────────────────────────────────────────────
+  // ── Category match ──────────────────────────────────────────────
   if (criteria.categories && criteria.categories.length > 0) {
     if (
       criteria.categories.includes('All') ||
-      (profile.category &&
-        criteria.categories
-          .map((c) => c.toLowerCase())
-          .includes(profile.category.toLowerCase()))
+      (profile.category && criteria.categories.map((c) => c.toLowerCase()).includes(profile.category.toLowerCase()))
     ) {
       score += 15;
       reasons.push(`Eligible for ${(profile.category ?? 'general').toUpperCase()} category`);
     } else if (!profile.category) {
+      isEligible = false;
       missingCriteria.push('Category not set in profile');
     } else {
-      missingCriteria.push(
-        `Category must be: ${criteria.categories.join(', ')}`,
-      );
+      isEligible = false;
+      missingCriteria.push(`Category must be: ${criteria.categories.join(', ')}`);
     }
   } else {
     score += 15;
     reasons.push('Open to all categories');
   }
 
-  // ── Income match (+15) ────────────────────────────────────────────────
+  // ── Income match ────────────────────────────────────────────────
   if (criteria.max_income != null) {
     if (profile.annual_income != null) {
       if (profile.annual_income <= criteria.max_income) {
         score += 15;
         reasons.push('Annual income within limit');
       } else {
-        missingCriteria.push(
-          `Annual income must be below INR ${criteria.max_income.toLocaleString('en-IN')}`,
-        );
+        isEligible = false;
+        missingCriteria.push(`Annual income must be below INR ${criteria.max_income.toLocaleString('en-IN')}`);
       }
     } else {
+      isEligible = false;
       missingCriteria.push('Annual income not provided');
     }
   } else {
@@ -189,7 +185,7 @@ function computeSchemeMatch(
     reasons.push('No income restriction');
   }
 
-  // ── Occupation match (+10) ────────────────────────────────────────────
+  // ── Occupation match ────────────────────────────────────────────
   if (criteria.occupations && criteria.occupations.length > 0) {
     const normalised = criteria.occupations.map((o) => o.toLowerCase());
     if (
@@ -199,25 +195,27 @@ function computeSchemeMatch(
       score += 10;
       reasons.push(`Occupation "${profile.occupation}" is eligible`);
     } else if (!profile.occupation) {
+      isEligible = false;
       missingCriteria.push('Occupation not provided');
     } else {
-      missingCriteria.push(
-        `Occupation must be: ${criteria.occupations.join(', ')}`,
-      );
+      isEligible = false;
+      missingCriteria.push(`Occupation must be: ${criteria.occupations.join(', ')}`);
     }
   } else {
     score += 10;
     reasons.push('Open to all occupations');
   }
 
-  // ── Gender match (+10) ────────────────────────────────────────────────
+  // ── Gender match ────────────────────────────────────────────────
   if (criteria.gender && criteria.gender !== 'any') {
     if (profile.gender === criteria.gender) {
       score += 10;
       reasons.push(`Eligible for ${profile.gender} applicants`);
     } else if (!profile.gender) {
+      isEligible = false;
       missingCriteria.push('Gender not set in profile');
     } else {
+      isEligible = false;
       missingCriteria.push(`Only for ${criteria.gender} applicants`);
     }
   } else {
@@ -225,14 +223,16 @@ function computeSchemeMatch(
     reasons.push('Open to all genders');
   }
 
-  // ── BPL status match (+10) ────────────────────────────────────────────
+  // ── BPL status match ────────────────────────────────────────────
   if (criteria.is_bpl === true) {
     if (profile.is_bpl === true) {
       score += 10;
       reasons.push('BPL card holder');
     } else if (profile.is_bpl === false) {
+      isEligible = false;
       missingCriteria.push('Requires BPL card');
     } else {
+      isEligible = false;
       missingCriteria.push('BPL status not provided');
     }
   } else {
@@ -240,7 +240,36 @@ function computeSchemeMatch(
     reasons.push('No BPL requirement');
   }
 
-  return { scheme, score, reasons, missingCriteria };
+  // ── Document Checking ───────────────────────────────────────────
+  const missingDocuments: string[] = [];
+  const reqDocs = scheme.documents_required || [];
+  
+  if (reqDocs.some(d => d.toLowerCase().includes('income')) && !profile.has_income_certificate) {
+    missingDocuments.push('Income Certificate');
+  }
+  if (reqDocs.some(d => d.toLowerCase().includes('caste') || d.toLowerCase().includes('category')) && !profile.has_caste_certificate && profile.category !== 'general') {
+    missingDocuments.push('Caste Certificate');
+  }
+  if (reqDocs.some(d => d.toLowerCase().includes('domicile') || d.toLowerCase().includes('resident')) && !profile.has_domicile_certificate) {
+    missingDocuments.push('Domicile Certificate');
+  }
+  if (reqDocs.some(d => d.toLowerCase().includes('bank') && d.toLowerCase().includes('aadhaar')) && !profile.is_aadhaar_bank_linked) {
+    missingDocuments.push('Aadhaar Seeded Bank Account');
+  }
+
+  let eligibility: 'eligible' | 'maybe' | 'not_eligible' = 'not_eligible';
+  if (isEligible) {
+    if (missingDocuments.length > 0) {
+      eligibility = 'maybe';
+      score = Math.max(0, score - 10); // slight penalty for missing docs
+    } else {
+      eligibility = 'eligible';
+    }
+  } else {
+    score = 0; // Hard rejection = 0 score
+  }
+
+  return { scheme, score, eligibility, reasons, missingCriteria, missingDocuments };
 }
 
 // ─── Public API ─────────────────────────────────────────────────────────────

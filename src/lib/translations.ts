@@ -21,6 +21,7 @@ const t = {
     taxCalculator: { en: 'Tax Calculator', hi: 'टैक्स कैलकुलेटर' },
     budgetAnalyzer: { en: 'Budget Analyzer', hi: 'बजट विश्लेषक' },
     monthlyReports: { en: 'Monthly Reports', hi: 'मासिक रिपोर्ट' },
+    applicationTracker: { en: 'Application Tracker', hi: 'एप्लिकेशन ट्रैकर' },
     support: { en: 'Support', hi: 'सहायता' },
     home: { en: 'Home', hi: 'होम' },
     profile: { en: 'Profile', hi: 'प्रोफ़ाइल' },

@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
+import { useParams } from 'react-router-dom';
 import {
   calculateSchemeMatches,
   calculateUnclaimedBenefits,
@@ -10,6 +11,7 @@ import type { SchemeType, GovernmentScheme } from '@/types';
 import { cn } from '@/lib/utils';
 import { useLanguageStore } from '@/stores/languageStore';
 import { T } from '@/lib/translations';
+import { useApplicationStore } from '@/stores/useApplicationStore';
 
 /* ─── Category tag color map ────────────────────────────────────────────── */
 
@@ -43,10 +45,18 @@ const FILTERS: { key: FilterType; label: string }[] = [
 export default function SchemesPage() {
   const lang = useLanguageStore((s) => s.lang);
   const user = useAuthStore((s) => s.user);
-  // user IS the UserProfile in our store
   const profile = user;
+  const trackApplication = useApplicationStore(s => s.trackApplication);
+  const applications = useApplicationStore(s => s.applications);
+  const { stateParam } = useParams<{ stateParam?: string }>();
 
-  const [activeFilter, setActiveFilter] = useState<FilterType>('all');
+  // Format url param (e.g., uttar-pradesh to Uttar Pradesh) if present
+  const urlState = useMemo(() => {
+    if (!stateParam) return null;
+    return stateParam.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
+  }, [stateParam]);
+
+  const [activeFilter, setActiveFilter] = useState<FilterType>(urlState ? 'state' : 'all');
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [search, setSearch] = useState('');
   const [visibleCount, setVisibleCount] = useState(30);
@@ -119,6 +129,17 @@ export default function SchemesPage() {
       schemes = schemes.filter((s) => s.type === activeFilter);
     }
 
+    // Apply URL state filter
+    if (urlState && activeFilter !== 'central') {
+      schemes = schemes.filter((s) => {
+        if (s.state && s.state.toLowerCase() === urlState.toLowerCase()) return true;
+        if (s.eligibility_criteria?.states?.some(st => st.toLowerCase() === urlState.toLowerCase())) return true;
+        // Also allow central schemes if they don't have specific state restrictions
+        if (s.type === 'central' && (!s.eligibility_criteria?.states || s.eligibility_criteria.states.length === 0)) return true;
+        return false;
+      });
+    }
+
     if (activeCategory !== 'all') {
       schemes = schemes.filter((s) => getPrimarySchemeCategory(s) === activeCategory);
     }
@@ -167,9 +188,9 @@ export default function SchemesPage() {
       <div className="flex items-start justify-between">
         <div>
           <p className="text-on-surface-variant font-body text-sm mb-1">
-            {hasProfile ? T('schemes', 'personalized', lang) : T('schemes', 'completeForMatch', lang)}
+            {urlState ? `State schemes for ${urlState}` : hasProfile ? T('schemes', 'personalized', lang) : T('schemes', 'completeForMatch', lang)}
           </p>
-          <h1 className="text-3xl font-headline font-bold text-on-surface">{T('schemes', 'title', lang)}</h1>
+          <h1 className="text-3xl font-headline font-bold text-on-surface">{urlState ? `${urlState} Schemes` : T('schemes', 'title', lang)}</h1>
           <p className="text-xs text-on-surface-variant mt-2">
             Live catalog from myScheme. Last synced:{' '}
             <span className="font-semibold text-on-surface">
@@ -355,6 +376,16 @@ export default function SchemesPage() {
           {schemes.map((scheme) => {
             const cat = categoryTag(scheme.ministry);
             const score = getMatchScore(scheme.id);
+            const matchData = schemeMatches?.find(m => m.scheme.id === scheme.id);
+            const isTracked = !!applications[scheme.id];
+            
+            // Calculate document readiness score
+            const requiredCount = scheme.documents_required?.length || 0;
+            let readyCount = requiredCount;
+            if (matchData?.missingDocuments) {
+              readyCount = Math.max(0, requiredCount - matchData.missingDocuments.length);
+            }
+            const docReadinessPct = requiredCount > 0 ? Math.round((readyCount / requiredCount) * 100) : 100;
 
             return (
               <div
@@ -433,25 +464,55 @@ export default function SchemesPage() {
                       </span>
                     )}
                   </div>
+                  {matchData && requiredCount > 0 && (
+                    <div className="mt-2 flex items-center justify-between text-xs bg-surface-container-low px-2 py-1.5 rounded-lg border border-outline-variant/30">
+                      <span className="text-on-surface-variant">Docs Ready:</span>
+                      <span className={cn("font-bold", docReadinessPct === 100 ? "text-india-green" : docReadinessPct >= 50 ? "text-saffron" : "text-error")}>
+                        {docReadinessPct}% ({readyCount}/{requiredCount})
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Action */}
-                {scheme.application_url ? (
-                  <a
-                    href={scheme.application_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-auto inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary-container text-on-primary font-bold text-sm px-4 py-2.5 rounded-xl transition-colors w-full"
+                <div className="mt-auto flex gap-2">
+                  <button
+                    onClick={() => {
+                      if (!isTracked) {
+                        trackApplication({
+                          id: scheme.id,
+                          title: scheme.name,
+                          type: 'scheme',
+                          status: 'Interested',
+                          portal_url: scheme.application_url,
+                        });
+                      }
+                    }}
+                    disabled={isTracked}
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 bg-surface-container-high hover:bg-surface-container-highest text-on-surface font-bold text-sm px-3 py-2.5 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <span className="material-symbols-outlined text-lg">open_in_new</span>
-{T('schemes', 'applyNow', lang)}
-                  </a>
-                ) : (
-                  <div className="mt-auto inline-flex items-center justify-center gap-2 bg-surface-container-high text-on-surface-variant font-bold text-sm px-4 py-2.5 rounded-xl w-full">
-                    <span className="material-symbols-outlined text-lg">info</span>
-{T('schemes', 'visitOffice', lang)}
-                  </div>
-                )}
+                    <span className="material-symbols-outlined text-[18px]">
+                      {isTracked ? 'check_circle' : 'bookmark_add'}
+                    </span>
+                    {isTracked ? 'Tracked' : 'Track'}
+                  </button>
+                  {scheme.application_url ? (
+                    <a
+                      href={scheme.application_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 inline-flex items-center justify-center gap-1.5 bg-primary hover:bg-primary-container text-on-primary font-bold text-sm px-3 py-2.5 rounded-xl transition-colors"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">open_in_new</span>
+                      Apply
+                    </a>
+                  ) : (
+                    <div className="flex-[1.5] inline-flex items-center justify-center gap-1.5 bg-surface-container-high text-on-surface-variant font-bold text-sm px-3 py-2.5 rounded-xl cursor-default">
+                      <span className="material-symbols-outlined text-[18px]">info</span>
+                      Visit Office
+                    </div>
+                  )}
+                </div>
               </div>
             );
           })}

@@ -23,6 +23,7 @@ const StockDetailPage = lazy(() => import('@/features/stocks/StockDetailPage'));
 const TaxCalculator = lazy(() => import('@/features/tools/TaxCalculator'));
 const BudgetAnalyzer = lazy(() => import('@/features/tools/BudgetAnalyzer'));
 const MonthlyReports = lazy(() => import('@/features/tools/MonthlyReports'));
+const ApplicationTracker = lazy(() => import('@/features/dashboard/ApplicationTracker'));
 const AuthCallback = lazy(() => import('@/features/auth/AuthCallback'));
 // Legal Pages
 const PrivacyPolicy = lazy(() => import('@/features/legal/PrivacyPolicy'));
@@ -88,7 +89,9 @@ function App() {
           <Route path="/dashboard" element={<DashboardLayout />}>
             <Route index element={<DashboardHome />} />
             <Route path="schemes" element={<SchemesPage />} />
+            <Route path="schemes/:stateParam" element={<SchemesPage />} />
             <Route path="scholarships" element={<ScholarshipsPage />} />
+            <Route path="scholarships/:stateParam" element={<ScholarshipsPage />} />
             <Route path="stocks" element={<StocksPage />} />
             <Route path="crossover" element={<CrossoverPage />} />
             <Route path="alerts" element={<AlertsPage />} />
@@ -101,6 +104,7 @@ function App() {
             <Route path="tax-calculator" element={<TaxCalculator />} />
             <Route path="budget-analyzer" element={<BudgetAnalyzer />} />
             <Route path="monthly-reports" element={<MonthlyReports />} />
+            <Route path="applications" element={<ApplicationTracker />} />
           </Route>
           {/* Admin Login */}
           <Route path="/admin/login" element={<AdminLogin />} />

@@ -6,7 +6,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { T } from '@/lib/translations';
 
 interface NavItem {
-  labelKey: 'dashboard' | 'schemes' | 'scholarships' | 'stocks' | 'crossover' | 'alerts' | 'dhanMitra' | 'askDhanSathi' | 'support' | 'taxCalculator' | 'budgetAnalyzer' | 'monthlyReports';
+  labelKey: 'dashboard' | 'schemes' | 'scholarships' | 'stocks' | 'crossover' | 'alerts' | 'dhanMitra' | 'askDhanSathi' | 'support' | 'taxCalculator' | 'budgetAnalyzer' | 'monthlyReports' | 'applicationTracker';
   icon: string;
   path: string;
   badge?: string;
@@ -25,6 +25,7 @@ const NAV_ITEMS: NavItem[] = [
   { labelKey: 'taxCalculator', icon: 'calculate', path: '/dashboard/tax-calculator', sectionKey: 'proTools' },
   { labelKey: 'budgetAnalyzer', icon: 'account_balance_wallet', path: '/dashboard/budget-analyzer', sectionKey: 'proTools' },
   { labelKey: 'monthlyReports', icon: 'assessment', path: '/dashboard/monthly-reports', sectionKey: 'proTools' },
+  { labelKey: 'applicationTracker', icon: 'check_circle', path: '/dashboard/applications', sectionKey: 'proTools' },
   { labelKey: 'support', icon: 'support_agent', path: '/dashboard/support', sectionKey: 'more' },
 ];
 

@@ -18,12 +18,32 @@ export interface UserProfile {
   annual_income?: number;
   is_bpl?: boolean;
   has_disability?: boolean;
+  // Existing education fields
   education_level?: 'school' | 'diploma' | 'graduation' | 'postgraduation' | 'phd' | 'technical' | 'abroad';
   current_course?: string;
   institution_name?: string;
   current_year?: string;
   last_exam_percentage?: number;
   is_hosteller?: boolean;
+  
+  // New extended student & demographic fields
+  stream?: string;
+  board_university?: string;
+  passing_year?: string;
+  institution_type?: 'government' | 'private' | 'aided';
+  parent_occupation?: string;
+  is_minority?: boolean;
+  is_farmer_family?: boolean;
+  is_orphan_single_parent?: boolean;
+  is_ex_serviceman_family?: boolean;
+
+  // Document Readiness flags
+  has_income_certificate?: boolean;
+  has_caste_certificate?: boolean;
+  has_domicile_certificate?: boolean;
+  is_aadhaar_bank_linked?: boolean;
+
+  // Base IDs
   pan_number?: string;
   aadhaar_last_four?: string;
   plan: SubscriptionPlan;
@@ -77,8 +97,31 @@ export interface GovernmentScheme {
 export interface SchemeMatch {
   scheme: GovernmentScheme;
   score: number;
+  eligibility: 'eligible' | 'maybe' | 'not_eligible';
   reasons: string[];
   missingCriteria: string[];
+  missingDocuments?: string[];
+}
+
+// ─── Scholarships ─────────────────────────────────────────────────────────────
+
+export interface StructuredScholarship {
+  id: string;
+  name: string;
+  provider: string; // e.g. "NSP", "Buddy4Study"
+  description: string;
+  eligibility: {
+    min_marks?: number;
+    max_income?: number;
+    course_level?: string[]; // e.g. ["graduation", "postgraduation"]
+    categories?: string[]; // e.g. ["sc", "st", "obc"]
+    gender?: 'male' | 'female' | 'any';
+    states?: string[];
+  };
+  benefits: string;
+  deadline?: string;
+  application_url?: string;
+  documents_required?: string[];
 }
 
 // ─── Stock Market ───────────────────────────────────────────────────────────

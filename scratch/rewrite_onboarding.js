@@ -1,4 +1,6 @@
-import { useState, useMemo } from 'react';
+const fs = require('fs');
+
+const code = `import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useForm } from 'react-hook-form';
@@ -852,3 +854,6 @@ export default function OnboardingPage() {
     </div>
   );
 }
+`
+
+fs.writeFileSync('src/features/onboarding/OnboardingPage.tsx', code);

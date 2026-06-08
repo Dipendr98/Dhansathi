@@ -12,6 +12,7 @@ interface AdminScheme {
   ministry: string;
   is_active: boolean;
   is_verified: boolean;
+  verified_at?: string;
   updated_at: string;
   matchCount: number;
 }
@@ -54,7 +55,7 @@ export default function AdminSchemes() {
       // Fetch all schemes
       const { data: schemesData, error } = await supabase
         .from('government_schemes')
-        .select('id, name, name_hi, scheme_type, ministry, is_active, is_verified, updated_at')
+        .select('id, name, name_hi, scheme_type, ministry, is_active, is_verified, verified_at, updated_at')
         .order('updated_at', { ascending: false });
 
       if (error) throw error;
@@ -79,6 +80,7 @@ export default function AdminSchemes() {
         ministry: s.ministry || 'Unknown',
         is_active: s.is_active ?? true,
         is_verified: s.is_verified ?? false,
+        verified_at: s.verified_at ? new Date(s.verified_at).toISOString().split('T')[0] : undefined,
         updated_at: s.updated_at ? new Date(s.updated_at).toISOString().split('T')[0] : '',
         matchCount: matchCounts[s.id] || 0,
       }));
@@ -126,6 +128,27 @@ export default function AdminSchemes() {
     setSchemes((prev) => prev.map((s) => (s.id === id ? { ...s, is_active: newActive } : s)));
     if (isSupabaseConfigured) {
       await supabase.from('government_schemes').update({ is_active: newActive, updated_at: new Date().toISOString() }).eq('id', id);
+    }
+  };
+
+  const toggleVerified = async (id: string) => {
+    const scheme = schemes.find((s) => s.id === id);
+    if (!scheme) return;
+    const newVerified = !scheme.is_verified;
+    const verifiedAt = newVerified ? new Date().toISOString() : null;
+    
+    setSchemes((prev) => prev.map((s) => (s.id === id ? { 
+      ...s, 
+      is_verified: newVerified,
+      verified_at: newVerified ? new Date().toISOString().split('T')[0] : undefined
+    } : s)));
+    
+    if (isSupabaseConfigured) {
+      await supabase.from('government_schemes').update({ 
+        is_verified: newVerified, 
+        verified_at: verifiedAt,
+        updated_at: new Date().toISOString() 
+      }).eq('id', id);
     }
   };
 
@@ -329,7 +352,7 @@ export default function AdminSchemes() {
                         <h3 className="font-headline font-bold text-on-surface truncate">{scheme.name}</h3>
                       )}
                       {scheme.is_verified ? (
-                        <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-lg bg-tertiary/10 text-tertiary text-xs font-semibold shrink-0">
+                        <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-lg bg-tertiary/10 text-tertiary text-xs font-semibold shrink-0" title={`Verified on ${scheme.verified_at}`}>
                           <span className="material-symbols-outlined text-[14px]">verified</span>
                           <span>Verified</span>
                         </span>
@@ -361,7 +384,12 @@ export default function AdminSchemes() {
                     </div>
                   </div>
                   <div className="flex items-center space-x-3 shrink-0">
-                    <button onClick={() => toggleActive(scheme.id)} className={cn('relative w-11 h-6 rounded-full transition-colors', scheme.is_active ? 'bg-tertiary' : 'bg-gray-300')}>
+                    <button onClick={() => toggleVerified(scheme.id)} className={cn('relative w-11 h-6 rounded-full transition-colors', scheme.is_verified ? 'bg-tertiary' : 'bg-gray-300')} title={scheme.is_verified ? 'Mark Unverified' : 'Mark Verified'}>
+                      <span className={cn('absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform flex items-center justify-center text-[12px] font-bold', scheme.is_verified ? 'translate-x-5.5 text-tertiary' : 'translate-x-0.5 text-gray-400')}>
+                        <span className="material-symbols-outlined text-[12px]">{scheme.is_verified ? 'done' : 'close'}</span>
+                      </span>
+                    </button>
+                    <button onClick={() => toggleActive(scheme.id)} className={cn('relative w-11 h-6 rounded-full transition-colors', scheme.is_active ? 'bg-primary' : 'bg-gray-300')} title={scheme.is_active ? 'Deactivate' : 'Activate'}>
                       <span className={cn('absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform', scheme.is_active ? 'translate-x-5.5' : 'translate-x-0.5')} />
                     </button>
                     {editingId === scheme.id ? (

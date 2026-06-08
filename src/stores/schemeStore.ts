@@ -175,7 +175,11 @@ function computeSchemeMatch(
     reasons.push('No BPL requirement');
   }
 
-  return { scheme, score, reasons, missingCriteria };
+  let eligibility: SchemeMatch['eligibility'] = 'not_eligible';
+  if (score >= 80) eligibility = 'eligible';
+  else if (score >= 50) eligibility = 'maybe';
+
+  return { scheme, score, reasons, missingCriteria, eligibility };
 }
 
 // ─── Store ──────────────────────────────────────────────────────────────────
