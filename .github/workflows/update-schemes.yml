@@ -26,6 +26,8 @@ jobs:
 
       - name: Refresh myScheme catalog
         run: npm run update:schemes
+        env:
+          MYSCHEME_API_KEY: ${{ secrets.MYSCHEME_API_KEY }}
 
       - name: Verify build
         run: npm run build
