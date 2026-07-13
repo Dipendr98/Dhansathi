@@ -1,5 +1,34 @@
 import { EXPLICIT_STATE_SCHEMES } from '../scripts/state_portals.js';
 
+// Fetching NSP + all of myScheme's education schemes takes several seconds.
+export const config = { maxDuration: 60 };
+
+// myScheme is India's official scheme catalogue; its education/scholarship
+// schemes are pulled in alongside NSP to widen coverage. The API key is the
+// public x-api-key that myscheme.gov.in ships to every browser (not a secret);
+// an env var of the same name overrides it if myScheme ever rotates the key.
+const MYSCHEME_API_KEY =
+  process.env.MYSCHEME_API_KEY || 'tYTy5eEhlu9rFjyxuCr7ra7ACp4dv1RH8gWuHTDc';
+const MYSCHEME_SEARCH_URL = 'https://api.myscheme.gov.in/search/v6/schemes';
+const MYSCHEME_PAGE_SIZE = 100;
+const MYSCHEME_PARALLEL = 10;
+
+const mySchemeHeaders = {
+  origin: 'https://www.myscheme.gov.in',
+  referer: 'https://www.myscheme.gov.in/',
+  'user-agent': 'Mozilla/5.0 (DhanSathi scholarship updater)',
+  'x-api-key': MYSCHEME_API_KEY,
+};
+
+// Keep only education/scholarship-flavoured schemes out of the full catalogue.
+function isScholarshipScheme(text, categories) {
+  const cat = categories.join(' ').toLowerCase();
+  if (cat.includes('education') || cat.includes('learning')) return true;
+  return /scholarship|fellowship|scholar|vidya|vidhya|shiksha|siksha|merit|tuition|pre[-\s]?matric|post[-\s]?matric|fee\s*reimburse|\bstudent|\beducation/i.test(
+    text,
+  );
+}
+
 function decodeHtml(value = '') {
   return String(value)
     .replace(/&amp;/g, '&')
@@ -312,6 +341,83 @@ async function fetchWithTimeout(url, options = {}) {
   }
 }
 
+async function fetchMySchemePage(from) {
+  const url = new URL(MYSCHEME_SEARCH_URL);
+  url.searchParams.set('lang', 'en');
+  url.searchParams.set('q', '');
+  url.searchParams.set('keyword', '');
+  url.searchParams.set('sort', 'multiple_sort');
+  url.searchParams.set('from', String(from));
+  url.searchParams.set('size', String(MYSCHEME_PAGE_SIZE));
+
+  const response = await fetch(url, { headers: mySchemeHeaders });
+  if (!response.ok) throw new Error(`myScheme request failed: ${response.status}`);
+  const data = await response.json();
+  if (data.statusCode !== 200 || !data.data?.hits?.items) {
+    throw new Error('Unexpected myScheme response');
+  }
+  return data.data;
+}
+
+function mapMySchemeScholarship(item) {
+  const fields = item.fields || {};
+  const name = fields.schemeName || fields.schemeShortTitle || 'Scholarship';
+  const slug = fields.slug || makeId(name, '');
+  const categories = Array.isArray(fields.schemeCategory) ? fields.schemeCategory : [];
+  const states = Array.isArray(fields.beneficiaryState) ? fields.beneficiaryState : [];
+  const tags = Array.isArray(fields.tags) ? fields.tags : [];
+  const context = `${name} ${fields.briefDescription || ''} ${tags.join(' ')} ${categories.join(' ')} ${fields.nodalMinistryName || ''}`;
+  const provider = fields.level === 'State' ? 'state' : 'central';
+  const stateName = states.filter((s) => s && s !== 'All').join(', ') || null;
+  const closeDate = fields.schemeCloseDate ? parseIndianDate(fields.schemeCloseDate) : null;
+
+  return {
+    id: `myscheme-${slug}`,
+    name,
+    provider,
+    department: fields.nodalMinistryName || 'Government of India',
+    education_levels: inferLevels(context),
+    target_groups: inferTargetGroups(name, context),
+    benefits: tags.slice(0, 4).join(', ') || 'See official scheme details on myScheme',
+    eligibility: fields.briefDescription || 'Eligibility is defined by the official myScheme scheme page.',
+    documents_required: ['Aadhaar', 'Income/category certificate if applicable', 'Previous marksheet', 'Bank account'],
+    application_url: `https://www.myscheme.gov.in/schemes/${slug}`,
+    portal: 'myScheme',
+    source: 'myScheme',
+    source_url: 'https://www.myscheme.gov.in/',
+    deadline_hint: closeDate ? `Applications close on ${closeDate}` : 'Check the myScheme portal for active dates',
+    studentApplicationCloseDate: closeDate || undefined,
+    status: closeDate && isExpired(closeDate) ? 'expired' : 'open',
+    state: stateName,
+    university: null,
+    programs: inferPrograms(name, context),
+  };
+}
+
+async function fetchMySchemeScholarships() {
+  const first = await fetchMySchemePage(0);
+  const total = first.hits.page.total;
+  const items = [...first.hits.items];
+
+  const offsets = [];
+  for (let from = MYSCHEME_PAGE_SIZE; from < total; from += MYSCHEME_PAGE_SIZE) offsets.push(from);
+  for (let i = 0; i < offsets.length; i += MYSCHEME_PARALLEL) {
+    const batch = offsets.slice(i, i + MYSCHEME_PARALLEL);
+    const pages = await Promise.all(batch.map((from) => fetchMySchemePage(from)));
+    for (const page of pages) items.push(...page.hits.items);
+  }
+
+  return items
+    .filter((item) => {
+      const fields = item.fields || {};
+      const categories = Array.isArray(fields.schemeCategory) ? fields.schemeCategory : [];
+      const tags = Array.isArray(fields.tags) ? fields.tags : [];
+      const text = `${fields.schemeName || ''} ${fields.briefDescription || ''} ${tags.join(' ')}`;
+      return isScholarshipScheme(text, categories);
+    })
+    .map(mapMySchemeScholarship);
+}
+
 export default async function handler(req, res) {
   const includeExpired = req.query?.includeExpired === 'true';
 
@@ -333,8 +439,11 @@ export default async function handler(req, res) {
       body: 'central_sponsored_state=sponserscheme'
     });
 
-    const [centralHtml, stateHtml, sponsoredHtml] = await Promise.allSettled([
-      centralReq, stateReq, sponsoredReq
+    // 4. myScheme education/scholarship schemes (official govt catalogue)
+    const mySchemeReq = fetchMySchemeScholarships();
+
+    const [centralHtml, stateHtml, sponsoredHtml, mySchemeRes] = await Promise.allSettled([
+      centralReq, stateReq, sponsoredReq, mySchemeReq
     ]);
 
     let allScholarships = [];
@@ -347,6 +456,9 @@ export default async function handler(req, res) {
     }
     if (sponsoredHtml.status === 'fulfilled') {
       allScholarships.push(...parseNspScholarships(sponsoredHtml.value, 'https://scholarships.gov.in/centralsOrsponsoredOrstate?sponsored'));
+    }
+    if (mySchemeRes.status === 'fulfilled') {
+      allScholarships.push(...mySchemeRes.value);
     }
 
     // Filter duplicates by ID
@@ -377,7 +489,7 @@ export default async function handler(req, res) {
     res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate=86400');
     return res.status(200).json({
       meta: {
-        source: 'Live Parallel Web Scrape (NSP + Hybrid State Generators)',
+        source: 'Live feed (NSP + myScheme + Hybrid State Generators)',
         fetched_at: new Date().toISOString(),
         total: allScholarships.length,
         include_expired: includeExpired,
@@ -385,6 +497,7 @@ export default async function handler(req, res) {
           centralHtml.status === 'fulfilled' ? 'NSP Central' : null,
           stateHtml.status === 'fulfilled' ? 'NSP State' : null,
           sponsoredHtml.status === 'fulfilled' ? 'NSP Sponsored' : null,
+          mySchemeRes.status === 'fulfilled' ? `myScheme (${mySchemeRes.value.length})` : null,
           'Hybrid Generator for All 28 Indian States & 8 UTs'
         ].filter(Boolean)
       },
