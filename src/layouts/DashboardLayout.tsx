@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import { Outlet, NavLink, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useLanguageStore } from '@/stores/languageStore';
@@ -35,32 +35,10 @@ export default function DashboardLayout() {
   const { lang, toggleLang } = useLanguageStore();
   const user = useAuthStore((s) => s.user);
 
-  const navRef = useRef<HTMLElement>(null);
-  const [sliderStyle, setSliderStyle] = useState({ top: 0, height: 0 });
-
   const isActive = (path: string) => {
     if (path === '/dashboard') return location.pathname === '/dashboard';
     return location.pathname.startsWith(path);
   };
-
-  useEffect(() => {
-    if (!navRef.current) return;
-    const activeLink = navRef.current.querySelector<HTMLElement>(
-      NAV_ITEMS.map((item) =>
-        isActive(item.path) ? `[data-nav-path="${item.path}"]` : null,
-      )
-        .filter(Boolean)
-        .join(',') || '[data-nav-path="__none__"]',
-    );
-    if (activeLink) {
-      const navRect = navRef.current.getBoundingClientRect();
-      const linkRect = activeLink.getBoundingClientRect();
-      setSliderStyle({
-        top: linkRect.top - navRect.top,
-        height: linkRect.height,
-      });
-    }
-  }, [location.pathname]);
 
   // Group nav items by section
   const sections = NAV_ITEMS.reduce<Record<string, NavItem[]>>((acc, item) => {
@@ -90,16 +68,7 @@ export default function DashboardLayout() {
           </div>
 
           {/* Navigation */}
-          <nav ref={navRef} className="flex-grow space-y-3 relative overflow-y-auto overflow-x-hidden scrollbar-thin pr-1" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.2) transparent' }}>
-            {/* Sliding pill indicator */}
-            <div
-              className="absolute left-0 right-0 bg-white/15 rounded-xl transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] z-0"
-              style={{
-                top: sliderStyle.top,
-                height: sliderStyle.height,
-                opacity: sliderStyle.height > 0 ? 1 : 0,
-              }}
-            />
+          <nav className="flex-grow space-y-3 relative overflow-y-auto overflow-x-hidden scrollbar-thin pr-1" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.2) transparent' }}>
             {Object.entries(sections).map(([section, items]) => (
               <div key={section}>
                 <p className="relative z-10 text-white/40 text-[10px] font-bold tracking-widest uppercase mb-1.5 px-3">
@@ -116,7 +85,7 @@ export default function DashboardLayout() {
                         className={cn(
                           'relative z-10 flex items-center justify-between px-3 py-2 rounded-xl transition-all',
                           isActive(item.path)
-                            ? 'text-white font-semibold'
+                            ? 'bg-white/15 text-white font-semibold'
                             : 'text-sky-100/70 hover:bg-white/5',
                         )}
                       >
