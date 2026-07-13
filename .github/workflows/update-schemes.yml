@@ -1,8 +1,12 @@
 name: Update government schemes
 
+# Schedule disabled: the GitHub account is billing-locked so scheduled runs
+# fail before starting and spam failure emails. The scheme feed is now
+# refreshed daily by the Vercel cron job at api/cron/update-schemes.js.
+# Re-add the cron block below after the billing lock is resolved:
+#   schedule:
+#     - cron: '30 2 * * *'
 on:
-  schedule:
-    - cron: '30 2 * * *'
   workflow_dispatch:
 
 permissions:

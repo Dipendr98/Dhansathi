@@ -1,8 +1,12 @@
 name: Daily Scholarship & Schemes Scraper
 
+# Schedule disabled: the GitHub account is billing-locked so scheduled runs
+# fail before starting and spam failure emails. Scholarships are now served
+# live from /api/scholarships (Vercel). Re-add the cron block below after the
+# billing lock is resolved if committed snapshots are wanted again:
+#   schedule:
+#     - cron: '0 2 * * *'
 on:
-  schedule:
-    - cron: '0 2 * * *' # Runs at 2 AM UTC every day
   workflow_dispatch: # Allows manual trigger from GitHub UI
 
 permissions:
