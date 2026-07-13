@@ -141,6 +141,7 @@ export default function ScholarshipsPage() {
   const [activeState, setActiveState] = useState<string>(initialUrlState);
   const [activeUniversity, setActiveUniversity] = useState<string>('all');
   const [activeProgram, setActiveProgram] = useState<string>('all');
+  const [activeCategory, setActiveCategory] = useState<string>('all');
   const [search, setSearch] = useState('');
   const [feed, setFeed] = useState<ScholarshipFeed | null>(null);
   const [loading, setLoading] = useState(true);
@@ -223,6 +224,12 @@ export default function ScholarshipsPage() {
     return Array.from(programs).sort();
   }, [scholarships]);
 
+  const uniqueCategories = useMemo(() => {
+    const categories = new Set<string>();
+    scholarships.forEach(s => s.target_groups?.forEach(g => categories.add(g)));
+    return Array.from(categories).sort();
+  }, [scholarships]);
+
   const filteredScholarships = useMemo(() => {
     return scholarships.filter((scholarship) => {
       const levelMatch = activeLevel === 'all' || scholarship.education_levels.includes(activeLevel);
@@ -230,10 +237,11 @@ export default function ScholarshipsPage() {
       const stateMatch = activeState === 'all' || scholarship.state === activeState;
       const universityMatch = activeUniversity === 'all' || scholarship.university === activeUniversity;
       const programMatch = activeProgram === 'all' || (scholarship.programs && scholarship.programs.includes(activeProgram));
-      
-      return levelMatch && providerMatch && stateMatch && universityMatch && programMatch && scholarshipMatchesSearch(scholarship, search);
+      const categoryMatch = activeCategory === 'all' || (scholarship.target_groups && scholarship.target_groups.includes(activeCategory));
+
+      return levelMatch && providerMatch && stateMatch && universityMatch && programMatch && categoryMatch && scholarshipMatchesSearch(scholarship, search);
     });
-  }, [activeLevel, activeProvider, activeState, activeUniversity, activeProgram, scholarships, search]);
+  }, [activeLevel, activeProvider, activeState, activeUniversity, activeProgram, activeCategory, scholarships, search]);
 
   const levelCounts = useMemo(() => {
     return LEVEL_FILTERS.reduce<Record<string, number>>((acc, filter) => {
@@ -340,6 +348,9 @@ export default function ScholarshipsPage() {
       </section>
 
       <div className="space-y-4">
+        <p className="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant -mb-1">
+          Class / Standard
+        </p>
         <div className="flex gap-2 overflow-x-auto pb-1">
           {LEVEL_FILTERS.map((filter) => (
             <button
@@ -391,33 +402,47 @@ export default function ScholarshipsPage() {
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-3">
-          <CustomSelect
-            value={activeState}
-            onChange={setActiveState}
-            options={[
-              { value: 'all', label: 'All States' },
-              ...uniqueStates.map(state => ({ value: state, label: state }))
-            ]}
-          />
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant mb-2">
+            Filter by category, state, degree
+          </p>
+          <div className="flex flex-wrap gap-3">
+            <CustomSelect
+              value={activeCategory}
+              onChange={setActiveCategory}
+              options={[
+                { value: 'all', label: 'All Categories' },
+                ...uniqueCategories.map(cat => ({ value: cat, label: cat }))
+              ]}
+            />
 
-          <CustomSelect
-            value={activeUniversity}
-            onChange={setActiveUniversity}
-            options={[
-              { value: 'all', label: 'All Universities' },
-              ...uniqueUniversities.map(uni => ({ value: uni, label: uni }))
-            ]}
-          />
+            <CustomSelect
+              value={activeState}
+              onChange={setActiveState}
+              options={[
+                { value: 'all', label: 'All States' },
+                ...uniqueStates.map(state => ({ value: state, label: state }))
+              ]}
+            />
 
-          <CustomSelect
-            value={activeProgram}
-            onChange={setActiveProgram}
-            options={[
-              { value: 'all', label: 'All Specific Programs' },
-              ...uniquePrograms.map(prog => ({ value: prog, label: prog }))
-            ]}
-          />
+            <CustomSelect
+              value={activeProgram}
+              onChange={setActiveProgram}
+              options={[
+                { value: 'all', label: 'All Degrees / Courses' },
+                ...uniquePrograms.map(prog => ({ value: prog, label: prog }))
+              ]}
+            />
+
+            <CustomSelect
+              value={activeUniversity}
+              onChange={setActiveUniversity}
+              options={[
+                { value: 'all', label: 'All Universities' },
+                ...uniqueUniversities.map(uni => ({ value: uni, label: uni }))
+              ]}
+            />
+          </div>
         </div>
       </div>
 
