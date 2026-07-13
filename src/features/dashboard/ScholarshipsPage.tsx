@@ -165,11 +165,11 @@ export default function ScholarshipsPage() {
 
         let response;
         try {
-          response = await fetch(`/scholarships.json?day=${day}`, { cache: 'no-store' });
-          if (!response.ok) throw new Error('JSON missing');
-        } catch {
-          // Fallback to live scrape if static JSON is missing
           response = await fetch(`/api/scholarships?day=${day}`, { cache: 'no-store' });
+          if (!response.ok) throw new Error('Live scrape unavailable');
+        } catch {
+          // Fallback to the committed static snapshot if the live scrape fails
+          response = await fetch(`/scholarships.json?day=${day}`, { cache: 'no-store' });
         }
         
         if (!response.ok) throw new Error(`Live scholarship fetch failed: ${response.status}`);

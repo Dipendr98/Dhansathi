@@ -1,8 +1,13 @@
 name: Update government schemes
 
+# Schedule disabled: the GitHub account is billing-locked so scheduled runs
+# fail before starting and spam failure emails. The scheme feed is now served
+# live (and edge-cached daily) from /api/schemes on Vercel. This workflow is
+# kept only for manually regenerating the committed static snapshot.
+# Re-add the cron block below after the billing lock is resolved:
+#   schedule:
+#     - cron: '30 2 * * *'
 on:
-  schedule:
-    - cron: '30 2 * * *'
   workflow_dispatch:
 
 permissions:
@@ -26,6 +31,8 @@ jobs:
 
       - name: Refresh myScheme catalog
         run: npm run update:schemes
+        env:
+          MYSCHEME_API_KEY: ${{ secrets.MYSCHEME_API_KEY }}
 
       - name: Verify build
         run: npm run build

@@ -14,6 +14,11 @@ const headers = {
 
 if (API_KEY) {
   headers['x-api-key'] = API_KEY;
+} else {
+  console.warn(
+    'MYSCHEME_API_KEY is not set — the myScheme API usually rejects keyless requests with 403. ' +
+      'Add the key as a repository secret named MYSCHEME_API_KEY.'
+  );
 }
 
 function slugify(value) {
