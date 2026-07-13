@@ -222,7 +222,7 @@ export default function DashboardLayout() {
 
       {/* Main content */}
       <main className="md:ml-[250px] min-h-screen pt-16 md:pt-0">
-        <div className="p-6 md:p-12">
+        <div className="p-4 md:p-12 pb-24 md:pb-12">
           <Outlet />
         </div>
       </main>

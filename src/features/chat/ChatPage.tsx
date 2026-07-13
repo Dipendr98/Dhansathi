@@ -792,7 +792,7 @@ export default function ChatPage() {
       initial="hidden"
       animate="visible"
       variants={stagger}
-      className="flex flex-col h-[calc(100vh-8rem)] md:h-[calc(100vh-6rem)]"
+      className="flex flex-col h-[calc(100dvh-11rem)] md:h-[calc(100vh-6rem)]"
     >
       {/* ── Header ── */}
       <motion.div variants={fadeUp} custom={0} className="mb-4">
