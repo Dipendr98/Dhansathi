@@ -667,7 +667,7 @@ export async function runSimulation(
   // 1. Fetch real stock data
   const stock = await fetchStockBySymbol(request.symbol);
   if (!stock) {
-    throw new Error(`Stock ${request.symbol} not found in Nifty 50`);
+    throw new Error(`Could not load market data for ${request.symbol}. Please check the symbol and try again.`);
   }
 
   onProgress?.({ stage: 'Analyzing market conditions...', percent: 20, message: 'Processing technical indicators' });
