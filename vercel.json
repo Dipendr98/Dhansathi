@@ -1,8 +1,5 @@
 {
   "regions": ["iad1"],
-  "crons": [
-    { "path": "/api/cron/update-schemes", "schedule": "30 2 * * *" }
-  ],
   "rewrites": [
     { "source": "/api/yahoo-finance/:path*", "destination": "https://query1.finance.yahoo.com/:path*" },
     { "source": "/api/twelve-data/:path*", "destination": "https://api.twelvedata.com/:path*" },

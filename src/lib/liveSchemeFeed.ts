@@ -14,6 +14,18 @@ export interface LiveSchemeFeed {
 }
 
 export async function loadLiveSchemeFeed(): Promise<LiveSchemeFeed | null> {
+  // Prefer the live myScheme feed (refreshed daily via edge cache); fall back
+  // to the committed static snapshot if the live endpoint is unavailable.
+  try {
+    const live = await fetch('/api/schemes', { cache: 'no-store' });
+    if (live.ok) {
+      const feed = (await live.json()) as LiveSchemeFeed & { error?: string };
+      if (!feed.error && feed.schemes?.length) return feed;
+    }
+  } catch {
+    // ignore and fall back to the static snapshot below
+  }
+
   try {
     const response = await fetch(`${import.meta.env.BASE_URL}generated-government-schemes.json`, { cache: 'no-store' });
     if (!response.ok) return null;
