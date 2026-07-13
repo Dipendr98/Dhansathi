@@ -252,6 +252,52 @@ const SCENARIO_CONTEXTS: Record<string, ScenarioContext> = {
   },
 };
 
+// ─── Custom Scenario Sentiment ──────────────────────────────────────────────
+// The local engine can't reason about free-text scenarios like the LLM does,
+// so it scores them from a curated bullish/bearish vocabulary. Word-boundary
+// matching (with common suffixes) avoids false hits like "commission" → "miss".
+
+const BULLISH_TERMS = [
+  'grow', 'growth', 'rise', 'surge', 'rally', 'profit', 'gain', 'beat', 'upgrade',
+  'acquire', 'acquisition', 'merger', 'expansion', 'expand', 'partnership', 'approval',
+  'buyback', 'dividend', 'bonus', 'breakthrough', 'boom', 'recovery', 'bullish',
+  'outperform', 'breakout', 'subsidy', 'incentive', 'contract', 'launch', 'record',
+  'strong', 'positive', 'win', 'order', 'demand', 'invest', 'stake',
+];
+
+const BEARISH_TERMS = [
+  'crash', 'plunge', 'decline', 'drop', 'fall', 'downgrade', 'fraud', 'scam',
+  'scandal', 'lawsuit', 'bankrupt', 'default', 'layoff', 'resign', 'recession',
+  'slowdown', 'sanction', 'bearish', 'selloff', 'weak', 'loss', 'miss', 'penalty',
+  'tariff', 'strike', 'shortage', 'recall', 'crisis', 'probe', 'slump', 'plummet',
+  'debt', 'war', 'negative', 'downtrend',
+];
+
+function countTermHits(lowerText: string, terms: string[]): number {
+  return terms.reduce(
+    (n, term) => (new RegExp(`\\b${term}(s|ed|ing|es)?\\b`, 'i').test(lowerText) ? n + 1 : n),
+    0,
+  );
+}
+
+/**
+ * Score a free-text scenario from -6 (very bearish) to +6 (very bullish).
+ * Returns 0 when nothing recognisable is found (honest neutral, not a guess).
+ */
+function scoreCustomScenario(text: string, sector: string): number {
+  const lower = text.toLowerCase();
+  const bull = countTermHits(lower, BULLISH_TERMS);
+  const bear = countTermHits(lower, BEARISH_TERMS);
+  const net = bull - bear;
+  if (net === 0) return 0;
+
+  const raw = Math.sign(net) * Math.min(5, 1.5 * Math.abs(net) + 0.5);
+  // A scenario that names the stock's own sector carries more conviction.
+  const sectorWord = sector.toLowerCase().split(/[\s&]+/)[0];
+  const mentionsSector = sectorWord.length > 2 && new RegExp(`\\b${sectorWord}`, 'i').test(lower);
+  return mentionsSector ? raw * 1.2 : raw;
+}
+
 // ─── Smart Local Engine ─────────────────────────────────────────────────────
 // Generates intelligent predictions using real stock data + scenario rules
 
@@ -294,15 +340,8 @@ function runLocalSimulation(
     scenarioScore = biasValue * scenario.impactMultiplier * (1 + Math.abs(sectorImpact)) * 3;
     scenarioScore += sectorImpact * 2;
   } else if (isCustom) {
-    // For custom scenarios, use a slight bullish bias (most custom scenarios are "what if good thing happens")
-    const customText = request.customScenario.toLowerCase();
-    if (customText.includes('crash') || customText.includes('fall') || customText.includes('drop') || customText.includes('loss') || customText.includes('war') || customText.includes('negative')) {
-      scenarioScore = -3;
-    } else if (customText.includes('grow') || customText.includes('rise') || customText.includes('acquisition') || customText.includes('expansion') || customText.includes('bullish')) {
-      scenarioScore = 3;
-    } else {
-      scenarioScore = 1; // Slight bullish bias for neutral custom scenarios
-    }
+    // Score the free-text scenario from its bullish/bearish vocabulary.
+    scenarioScore = scoreCustomScenario(request.customScenario, stock.sector);
   }
 
   // ── Compute final direction and confidence ─────────────────────────────

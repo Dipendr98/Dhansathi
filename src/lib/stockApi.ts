@@ -592,6 +592,51 @@ async function fetchYahooIndex(ticker: string): Promise<{ price: number; change:
  *
  * Results are cached for 5 minutes.
  */
+/**
+ * Build an approximate baseline StockData from the curated Nifty 50 definition.
+ * Used only when every live source is unavailable, so the app still shows a
+ * reasonable recent price instead of a stale hardcoded one. Clearly flagged as
+ * `estimated` so the UI and simulation engine treat it as low-confidence.
+ */
+function buildBaselineStock(def: StockDefinition): StockData {
+  const price = def.basePrice;
+  return {
+    symbol: def.symbol,
+    name: def.name,
+    sector: def.sector,
+    price,
+    change: 0,
+    change_pct: 0,
+    volume: def.baseAvgVolume,
+    avg_volume: def.baseAvgVolume,
+    delivery_pct: 0,
+    market_cap: def.baseMarketCap,
+    pe_ratio: def.basePE,
+    week_52_high: roundTo(price * 1.25, 2),
+    week_52_low: roundTo(price * 0.75, 2),
+    rsi_14: 50,
+    sma_20: price,
+    sma_50: price,
+    sma_200: price,
+    signal: 'hold',
+    updated_at: new Date().toISOString(),
+    data_source: 'Curated baseline (live sources unavailable)',
+    data_quality: 'estimated',
+    delivery_source: 'unavailable',
+    signal_source: 'estimated',
+    as_of: new Date().toISOString(),
+    warning:
+      'Live price source is temporarily unavailable — showing an approximate baseline. Re-run when live data is back for an accurate analysis.',
+  };
+}
+
+function buildBaselineStocks(symbols?: string[]): StockData[] {
+  const defs = symbols
+    ? NIFTY50_STOCKS.filter((d) => symbols.includes(d.symbol))
+    : NIFTY50_STOCKS;
+  return defs.map(buildBaselineStock);
+}
+
 export async function fetchLiveStocks(): Promise<StockData[]> {
   const cacheKey = 'all_nifty50';
   const cached = getCached<StockData[]>(cacheKey);
@@ -618,11 +663,10 @@ export async function fetchLiveStocks(): Promise<StockData[]> {
     stocks = await fetchFromTwelveData(allSymbols);
   }
 
-  // Fallback to mock data if all live APIs fail
+  // Fallback to the curated baseline if all live APIs fail
   if (!stocks || stocks.length === 0) {
-    console.warn('[stockApi] Using mock stock data as fallback');
-    const { MOCK_STOCKS } = await import('@/data/mockStocks');
-    stocks = MOCK_STOCKS;
+    console.warn('[stockApi] All live sources failed — using curated baseline');
+    stocks = buildBaselineStocks();
   }
 
   setCache(cacheKey, stocks);
@@ -664,13 +708,12 @@ export async function fetchStockBySymbol(symbol: string): Promise<StockData | nu
   if (!stocks) stocks = await fetchFromTwelveData([upperSymbol]);
 
   let stock = stocks?.[0] ?? null;
-  
-  // Fallback to mock data if live APIs fail
+
+  // Fallback to the curated baseline (recent price, flagged estimated) if live fails
   if (!stock) {
-    const { MOCK_STOCKS } = await import('@/data/mockStocks');
-    stock = MOCK_STOCKS.find(s => s.symbol === upperSymbol) ?? null;
+    stock = buildBaselineStock(def);
   }
-  
+
   if (stock) setCache(cacheKey, stock);
   return stock;
 }
@@ -713,10 +756,9 @@ export async function fetchStockQuotes(symbols: string[]): Promise<StockData[]> 
 
   if (!stocks) stocks = await fetchFromTwelveData(validSymbols);
   
-  // Fallback to mock data if all live APIs fail
+  // Fallback to the curated baseline if all live APIs fail
   if (!stocks || stocks.length === 0) {
-    const { MOCK_STOCKS } = await import('@/data/mockStocks');
-    stocks = MOCK_STOCKS.filter(s => validSymbols.includes(s.symbol));
+    stocks = buildBaselineStocks(validSymbols);
   }
 
   setCache(cacheKey, stocks);
