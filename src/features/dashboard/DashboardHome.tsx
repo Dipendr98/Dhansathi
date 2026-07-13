@@ -139,27 +139,27 @@ export default function DashboardHome() {
   ];
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-5 md:space-y-8">
       {/* ── Header ─────────────────────────────────────────────────────────── */}
       <div>
         <p className="text-on-surface-variant font-body text-sm mb-1">{greetingText}, {userName}</p>
-        <h1 className="text-3xl font-headline font-bold text-on-surface">{T('home', 'title', lang)}</h1>
+        <h1 className="text-2xl md:text-3xl font-headline font-bold text-on-surface">{T('home', 'title', lang)}</h1>
       </div>
 
       {/* ── Stat cards ─────────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 md:gap-5">
         {statCards.map((card) => (
           <div
             key={card.label}
-            className={`bg-surface-container-lowest rounded-2xl p-5 border-t-4 ${card.border} shadow-ambient transition-transform hover:-translate-y-0.5`}
+            className={`bg-surface-container-lowest rounded-2xl p-4 md:p-5 border-t-4 ${card.border} shadow-ambient transition-transform hover:-translate-y-0.5`}
           >
-            <div className="flex items-start justify-between mb-3">
-              <p className="text-on-surface-variant text-sm font-medium">{card.label}</p>
-              <div className={`w-10 h-10 rounded-xl ${card.iconBg} flex items-center justify-center`}>
-                <span className={`material-symbols-outlined text-xl ${card.iconColor}`}>{card.icon}</span>
+            <div className="flex items-start justify-between mb-2 md:mb-3 gap-2">
+              <p className="text-on-surface-variant text-xs md:text-sm font-medium leading-tight">{card.label}</p>
+              <div className={`shrink-0 w-9 h-9 md:w-10 md:h-10 rounded-xl ${card.iconBg} flex items-center justify-center`}>
+                <span className={`material-symbols-outlined text-lg md:text-xl ${card.iconColor}`}>{card.icon}</span>
               </div>
             </div>
-            <p className="text-2xl font-mono font-bold text-on-surface">{card.value}</p>
+            <p className="text-xl md:text-2xl font-mono font-bold text-on-surface">{card.value}</p>
             <p className={`text-xs mt-1 font-medium ${card.subColor ?? 'text-on-surface-variant'}`}>{card.sub}</p>
           </div>
         ))}
