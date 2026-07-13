@@ -638,7 +638,14 @@ export async function fetchStockBySymbol(symbol: string): Promise<StockData | nu
 
   // Check if it's a valid Nifty 50 symbol
   const def = NIFTY50_STOCKS.find((s) => s.symbol === upperSymbol);
-  if (!def) return null;
+  if (!def) {
+    // Not a Nifty 50 stock — still let the user analyse it by fetching live
+    // data straight from Yahoo. Indian stocks use the .NS suffix; global
+    // stocks (e.g. AAPL) use the raw ticker, so try NSE first then fall back.
+    const viaNse = await fetchAnyStock(`${upperSymbol}.NS`);
+    if (viaNse) return viaNse;
+    return await fetchAnyStock(upperSymbol);
+  }
 
   // Check cache
   const cacheKey = `stock_${upperSymbol}`;
